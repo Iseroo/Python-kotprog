@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 import sys
+from utils.map_reader import *
 
 
 pygame.init()   
@@ -36,6 +37,10 @@ class Game:
         pygame.display.flip()
         
 if __name__ == "__main__":
+    png = read_map_image("./map/level00.png")
+    for x in range(100):
+        for y in range(100):
+            print(png[x, y])
+
     
-    game = Game()
-    game.run()
+    
