@@ -1,5 +1,5 @@
 from enum import Enum
-from message_service import MessageService
+from utils.message_service import MessageService
 class ITEM(Enum):
     ITEM1 = 1
     ITEM2 = 2

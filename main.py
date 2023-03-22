@@ -3,6 +3,7 @@ from pygame.locals import *
 import sys
 from utils.map_reader import *
 from utils.message_service import *
+from utils.item import *
 
 pygame.init()   
 
