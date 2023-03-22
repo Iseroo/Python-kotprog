@@ -1,14 +1,18 @@
-from typing import MutableSequence
+from typing import MutableSequence, TypedDict
+
+class Message(TypedDict):
+    text: str
+    severity: str # 'info', 'warning', 'error'
 
 class MessageService:
-    messages: MutableSequence[str] = []
+    messages: MutableSequence[Message] = []
     
     @staticmethod    
-    def add(message: str) -> None:
+    def add(message: Message) -> None:
         MessageService.messages.append(message)
        
     @staticmethod
-    def get_messages() -> MutableSequence[str]:
+    def get_messages() -> MutableSequence[Message]:
         return MessageService.messages
     
     @staticmethod
@@ -16,7 +20,7 @@ class MessageService:
         messages = []
         
     @staticmethod
-    def next() -> str:
+    def next() -> Message:
         
         return MessageService.messages.pop(0) if len(MessageService.messages) > 0 else None
         

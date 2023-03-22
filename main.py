@@ -35,10 +35,9 @@ class Game:
                     pygame.quit()
                     sys.exit()
                 if event.key == K_SPACE:
-                    MessageService.add('Hello')
-        message = MessageService.next()
-        if message:
-            print(message)
+                    MessageService.add({"text": "Inventory is full", "severity": "warning"})
+                    MessageService.add({"text": "Inventory is full", "severity": "error"})
+        self.message_service_subscribe()
     def update(self):
         pygame.display.flip()
     
@@ -47,7 +46,11 @@ class Game:
         for x in range(300):
             for y in range(300):
                 self.screen.set_at((x+100, y+100), self.png[x, y])
-                
+        
+    def message_service_subscribe(self):
+        message = MessageService.next()
+        if message: #do something
+            print(message)     
 
         
     

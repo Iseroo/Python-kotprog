@@ -14,5 +14,5 @@ class Item:
         if self.count < self.max:
             self.count += 1
         else:
-            MessageService.messages = "Inventory is full"
+            MessageService.add({"text": "Inventory is full", "severity": "warning"})
     
