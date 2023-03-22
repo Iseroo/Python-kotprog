@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 import sys
 from utils.map_reader import *
-
+from utils.message_service import *
 
 pygame.init()   
 
@@ -28,7 +28,16 @@ class Game:
                 self.running = False
                 pygame.quit()
                 sys.exit()
-        
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    self.running = False
+                    pygame.quit()
+                    sys.exit()
+                if event.key == K_SPACE:
+                    MessageService.add('Hello')
+        message = MessageService.next()
+        if message:
+            print(message)
     def update(self):
         pygame.display.flip()
     
@@ -38,7 +47,7 @@ class Game:
             for y in range(300):
                 self.screen.set_at((x+100, y+100), self.png[x, y])
                 
-            
+
         
     
         

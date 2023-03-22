@@ -1,5 +1,5 @@
 from enum import Enum
- 
+from message_service import MessageService
 class ITEM(Enum):
     ITEM1 = 1
     ITEM2 = 2
@@ -14,5 +14,5 @@ class Item:
         if self.count < self.max:
             self.count += 1
         else:
-            raise Exception("Item stack is full")
+            MessageService.messages = "Inventory is full"
     
