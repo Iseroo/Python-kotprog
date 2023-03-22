@@ -22,7 +22,8 @@ class Game:
             (self.img_size[0]*40, self.img_size[1]*40))
         self.make_map()
         self.camera_pos = (0, 0)
-        self.camera_speed = 100
+        self.camera_speed = 5
+        self.update_camera()
 
     def run(self):
 
@@ -31,6 +32,8 @@ class Game:
             self.handle_events()
             self.move_camera()
             self.screen.blit(self.camera, self.camera_pos)
+            pygame.display.set_caption("FPS: " + str(self.clock.get_fps()))
+
             self.draw()
             self.update()
 
@@ -50,14 +53,15 @@ class Game:
                         {"text": "Inventory is full", "severity": "warning"})
                     MessageService.add(
                         {"text": "Inventory is full", "severity": "error"})
-
+                if event.key == K_e:
+                    pass
         self.message_service_subscribe()
 
     def update(self):
         pygame.display.flip()
 
     def draw(self):
-        self.game_map.draw(self.camera)
+        pass
 
     def message_service_subscribe(self):
         message = MessageService.next()
@@ -110,6 +114,9 @@ class Game:
         if self.camera_pos[1] < -self.camera.get_height() + self.screen.get_height():
             self.camera_pos = (
                 self.camera_pos[0], -self.camera.get_height() + self.screen.get_height())
+
+    def update_camera(self):
+        self.game_map.draw(self.camera)
 
 
 if __name__ == "__main__":
