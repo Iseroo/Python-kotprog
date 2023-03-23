@@ -5,7 +5,9 @@ from utils.game_map import Block, GameMap
 from utils.map_reader import *
 from utils.message_service import *
 from utils.item import *
+from utils.config import Config
 import webcolors
+from utils.character import Character
 
 pygame.init()
 
@@ -24,6 +26,7 @@ class Game:
         self.camera_pos = (0, 0)
         self.camera_speed = 5
         self.update_camera()
+        self.character = Character()
 
     def run(self):
 
@@ -31,6 +34,7 @@ class Game:
             self.clock.tick(60)
             self.handle_events()
             self.move_camera()
+            self.move_character()
             self.screen.blit(self.camera, self.camera_pos)
             pygame.display.set_caption("FPS: " + str(self.clock.get_fps()))
 
@@ -61,7 +65,7 @@ class Game:
         pygame.display.flip()
 
     def draw(self):
-        pass
+        self.character.draw(self.screen)
 
     def message_service_subscribe(self):
         message = MessageService.next()
@@ -115,11 +119,23 @@ class Game:
             self.camera_pos = (
                 self.camera_pos[0], -self.camera.get_height() + self.screen.get_height())
 
+    def move_character(self):  # move with wasd
+        keys = pygame.key.get_pressed()
+
+        if keys[K_a]:
+            self.character.move("left")
+        if keys[K_d]:
+            self.character.move("right")
+        if keys[K_w]:
+            self.character.move("up")
+        if keys[K_s]:
+            self.character.move("down")
+
     def update_camera(self):
         self.game_map.draw(self.camera)
 
 
 if __name__ == "__main__":
-
+    Config.load("./config/config.json")
     game = Game()
     game.run()
