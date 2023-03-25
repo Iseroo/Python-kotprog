@@ -1,10 +1,10 @@
 {
     "items_stack_size": {
-        "stone": 32,
-        "wood": 32,
-        "stick": 32,
-        "carrot": 32,
-        "berry": 32
+        "STONE": 32,
+        "WOOD": 1,
+        "STICK": 1,
+        "CARROT": 32,
+        "BERRY": 1
     },
 
     "player": {
@@ -18,5 +18,15 @@
         "died": { "row": 28, "count": 4 }
     },
 
-    "animation_delay": 10
+    "animation_delay": 10,
+
+    "camera_offset": {
+        "x": 40,
+        "y": 40
+    },
+
+    "screen_size": {
+        "width": 800,
+        "height": 600
+    }
 }

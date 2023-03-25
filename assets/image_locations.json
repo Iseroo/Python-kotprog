@@ -1,0 +1,9 @@
+{
+    "cat": "./assets/images/cat.png",
+    "grass": "./assets/images/grass.png",
+    "inventory_bar": "./assets/images/Inventory_Bar.png",
+    "inventory_slot": "./assets/images/Inventory_Slot.png",
+    "inventory_slot_selected": "./assets/images/Inventory_select.png",
+    "items": "./assets/images/items.png",
+    "level00": "./assets/images/map/level00.png"
+}

@@ -41,21 +41,8 @@ class ITEM(Enum):
 
 
 class Item:
-    def __init__(self, item_image, stack_size: int = 1) -> None:
-        self.count = 0
+    def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1) -> None:
+        self.count = 1
         self.max = stack_size
         self.item_image = item_image
-
-    def pickup(self) -> None:
-        if self.count < self.max:
-            self.count += 1
-        else:
-            MessageService.add(
-                {"text": "Inventory is full", "severity": "warning"})
-
-    def drop(self) -> None:
-        if self.count > 0:
-            self.count -= 1
-        else:
-            MessageService.add(
-                {"text": "Inventory is empty", "severity": "warning"})
+        self.type = item_type

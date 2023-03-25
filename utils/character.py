@@ -1,25 +1,10 @@
 from typing import *
+from utils.functions import get_item_sprite_image, scale_sprites
+from utils.inventory import Inventory
 from utils.item import Item
 import random
 import pygame
 from utils.config import Config
-
-
-def get_item_sprite_image(sprite_sheet: pygame.Surface, row_index: int, count: int, sprite_size=32, spacing: int = 0):
-
-    sprites = [pygame.Surface(
-        (sprite_size, sprite_size), pygame.SRCALPHA) for x in range(count)]
-
-    for i in range(count):
-
-        sprites[i].blit(sprite_sheet, (0, 0), (i * (sprite_size + spacing), row_index * (sprite_size + spacing),
-                                               sprite_size, sprite_size))
-
-    return sprites
-
-
-def scale_sprites(sprites: list, scale: float):
-    return [pygame.transform.scale(x, (x.get_width() * scale, x.get_height() * scale)) for x in sprites]
 
 
 class Character:
@@ -34,9 +19,7 @@ class Character:
         self.hp = 100
         self.max_hp = 100
 
-        self.inventory = {
-            x: None for x in range(5)
-        }
+        self.inventory = Inventory()
 
         self.load_sprite()
         self.idle_generator = self.generate_idle()
@@ -55,7 +38,7 @@ class Character:
         self.position = (0, 0)
 
     def load_sprite(self):
-        img = pygame.image.load('assets/images/cat.png').convert_alpha()
+        img = pygame.image.load(Config.images["cat"]).convert_alpha()
 
         walk = Config.data["cat_sprite_indexes"]["walk"]
         self.sprites['walk'] = scale_sprites(get_item_sprite_image(
@@ -149,6 +132,7 @@ class Character:
             self.wait_for_idle = 100
             self.idle(screen)
         else:
+            self.check_wall_boundries(screen)
             screen.blit(self.next_sprite, self.position)
 
     def move(self, direction):
@@ -165,3 +149,16 @@ class Character:
             self.position = (self.position[0], self.position[1] - 1)
         elif direction == 'down':
             self.position = (self.position[0], self.position[1] + 1)
+
+    def check_wall_boundries(self, screen):
+        if self.position[0] < 0:
+            self.position = (0, self.position[1])
+        elif self.position[0] > screen.get_width() - self.next_sprite.get_width():
+            self.position = (screen.get_width() -
+                             self.next_sprite.get_width(), self.position[1])
+
+        if self.position[1] < 0:
+            self.position = (self.position[0], 0)
+
+    def get_position(self):
+        return (self.position[0] + self.sprites['idle'][0].get_width() // 2, self.position[1] + self.sprites['idle'][0].get_height() // 2)

@@ -1,44 +1,69 @@
+import random
 import pygame
 from pygame.locals import *
 import sys
 from utils.game_map import Block, GameMap
+from utils.inventory import InventoryHUD, Inventory
 from utils.map_reader import *
 from utils.message_service import *
 from utils.item import *
 from utils.config import Config
 import webcolors
 from utils.character import Character
+from utils.text_display import PlayerInfoText, TextDisplay
 
 pygame.init()
 
 
 class Game:
     def __init__(self):
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode(
+            (Config.data["screen_size"]["width"], Config.data["screen_size"]["height"]))
 
         self.clock = pygame.time.Clock()
         self.running = True
         self.img_size, self.png = read_map_image(
-            "./assets/images/map/level00.png")
+            Config.images["level00"])
+
+        self.screen_layer = pygame.Surface(
+            (self.img_size[0]*40, self.img_size[1]*40))
+
+        self.map_layer = pygame.Surface(
+            (self.img_size[0]*40, self.img_size[1]*40))
         self.camera = pygame.Surface(
             (self.img_size[0]*40, self.img_size[1]*40))
         self.make_map()
         self.camera_pos = (0, 0)
         self.camera_speed = 5
         self.update_camera()
+
+        self.items = {}
+        self.load_items()
+
         self.character = Character()
+
+        self.player_info_text_display = PlayerInfoText(
+            (self.character.get_position()[0], self.character.get_position()[1]-20))
+
+        self.inventory = Inventory()
+
+        self.inventory.add_item_to_stack(
+            Item(self.items['CARROT'], 'CARROT', 1))
+
+        self.inventory_hud = InventoryHUD(self.inventory)
+        self.inventory_hud.update_slots()
+
+        self.onblock = None
 
     def run(self):
 
         while self.running:
             self.clock.tick(60)
-            self.handle_events()
             self.move_camera()
             self.move_character()
-            self.screen.blit(self.camera, self.camera_pos)
             pygame.display.set_caption("FPS: " + str(self.clock.get_fps()))
-
             self.draw()
+            self.handle_events()
             self.update()
 
     def handle_events(self):
@@ -57,25 +82,61 @@ class Game:
                         {"text": "Inventory is full", "severity": "warning"})
                     MessageService.add(
                         {"text": "Inventory is full", "severity": "error"})
-                if event.key == K_e:
-                    pass
+                if event.key == K_q:
+                    self.inventory.remove_item_from_slot(
+                        self.inventory_hud.selected_slot)
+                    self.inventory_hud.update_slots()
+                if event.key == K_f:
+                    if self.onblock:
+                        for item in self.onblock.items:
+                            if self.inventory.add_item_to_stack(item):
+                                self.onblock.remove_item_from_top()
+                                self.inventory_hud.update_slots()
+                                self.onblock.draw(self.map_layer)
+                                break
+                            else:
+                                break
+
+            if event.type == pygame.MOUSEWHEEL:
+                if event.y > 0:
+                    self.inventory_hud.select_slot(
+                        self.inventory_hud.selected_slot + 1)
+                elif event.y < 0:
+                    self.inventory_hud.select_slot(
+                        self.inventory_hud.selected_slot - 1)
+
         self.message_service_subscribe()
 
     def update(self):
+        self.onblock = self.game_map.on_block_check(
+            self.character.get_position())
+        self.player_info_text_display.set_coords(
+            (self.character.get_position()[0], self.character.get_position()[1]-20))
         pygame.display.flip()
 
     def draw(self):
-        self.character.draw(self.screen)
+        self.screen.fill(MAPCOLOR.GRASS.rgb(MAPCOLOR.GRASS.value))
+        self.screen_layer.blit(self.map_layer, (0, 0))
+        self.character.draw(self.screen_layer)
+        self.player_info_text_display.draw(self.screen_layer)
+        self.screen.blit(self.screen_layer, self.camera_pos)
+
+        self.inventory_hud.draw(self.screen)
 
     def message_service_subscribe(self):
         message = MessageService.next()
         if message:  # TODO: do something
-            print(message)
+            color = (249, 113, 50) if message["severity"] == "warning" else (
+                255, 0, 0) if message["severity"] == "error" else (0, 0, 0)
+            text = TextDisplay(
+                message["text"], 12, color)
+
+            self.player_info_text_display.add(text, duration=100)
 
     def make_map(self):
         self.game_map = GameMap()
         sprite_sheet = pygame.image.load(
-            "./assets/images/items.png").convert_alpha()
+            Config.images["items"]).convert_alpha()
 
         for x in range(0, self.img_size[0]):
             for y in range(0, self.img_size[1]):
@@ -87,8 +148,8 @@ class Game:
                     block)
 
                 if mapcolor != MAPCOLOR.GRASS and mapcolor != MAPCOLOR.WATER:
-                    block.add_item(Item(get_item_sprite_image(
-                        sprite_sheet, ITEM[mapcolor.name].value)))
+                    block.add_item(Item(get_map_sprite_image(
+                        sprite_sheet, ITEM[mapcolor.name].value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name]))
 
     def move_camera(self):
         keys = pygame.key.get_pressed()
@@ -96,28 +157,34 @@ class Game:
         if keys[K_LEFT]:
             self.camera_pos = (
                 self.camera_pos[0] + self.camera_speed, self.camera_pos[1])
+            self.check_camera_pos()
         if keys[K_RIGHT]:
             self.camera_pos = (
                 self.camera_pos[0] - self.camera_speed, self.camera_pos[1])
+            self.check_camera_pos()
         if keys[K_UP]:
             self.camera_pos = (
                 self.camera_pos[0], self.camera_pos[1] + self.camera_speed)
+            self.check_camera_pos()
         if keys[K_DOWN]:
             self.camera_pos = (
                 self.camera_pos[0], self.camera_pos[1] - self.camera_speed)
-        if self.camera_pos[0] > 0:
-            self.camera_pos = (0, self.camera_pos[1])
+            self.check_camera_pos()
 
-        if self.camera_pos[1] > 0:
-            self.camera_pos = (self.camera_pos[0], 0)
+    def check_camera_pos(self):
 
-        if self.camera_pos[0] < -self.camera.get_width() + self.screen.get_width():
-            self.camera_pos = (-self.camera.get_width() +
-                               self.screen.get_width(), self.camera_pos[1])
-
-        if self.camera_pos[1] < -self.camera.get_height() + self.screen.get_height():
+        if self.camera_pos[0] > 0 + Config.data["camera_offset"]["x"]:
             self.camera_pos = (
-                self.camera_pos[0], -self.camera.get_height() + self.screen.get_height())
+                0 + Config.data["camera_offset"]["x"], self.camera_pos[1])
+        if self.camera_pos[0] < -self.camera.get_width() + Config.data["screen_size"]["width"] - Config.data["camera_offset"]["x"]:
+            self.camera_pos = (-self.camera.get_width() +
+                               Config.data["screen_size"]["width"] - Config.data["camera_offset"]["x"], self.camera_pos[1])
+        if self.camera_pos[1] > 0 + Config.data["camera_offset"]["y"]:
+            self.camera_pos = (
+                self.camera_pos[0], 0 + Config.data["camera_offset"]["y"])
+        if self.camera_pos[1] < -self.camera.get_height() + Config.data["screen_size"]["height"] - Config.data["camera_offset"]["y"]:
+            self.camera_pos = (self.camera_pos[0], -self.camera.get_height() +
+                               Config.data["screen_size"]["height"] - Config.data["camera_offset"]["y"])
 
     def move_character(self):  # move with wasd
         keys = pygame.key.get_pressed()
@@ -132,10 +199,18 @@ class Game:
             self.character.move("down")
 
     def update_camera(self):
-        self.game_map.draw(self.camera)
+        self.game_map.draw(self.map_layer)
+
+    def load_items(self):
+        sprite_sheet = pygame.image.load(
+            Config.images["items"]).convert_alpha()
+        for item in ITEM:
+            self.items[item.name] = get_map_sprite_image(
+                sprite_sheet, ITEM[item.name].value)
 
 
 if __name__ == "__main__":
     Config.load("./config/config.json")
+    Config.load_image_locations("./assets/image_locations.json")
     game = Game()
     game.run()

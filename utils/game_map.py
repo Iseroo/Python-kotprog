@@ -2,7 +2,7 @@ from utils.item import Item, MAPCOLOR
 from typing import *
 import pygame
 import random
-from utils.map_reader import get_item_sprite_image
+from utils.map_reader import get_map_sprite_image
 
 
 class Block:
@@ -19,7 +19,7 @@ class Block:
     def reset_block_image(self):
         if self.type != MAPCOLOR.WATER:
             self.image.fill(MAPCOLOR.GRASS.rgb(MAPCOLOR.GRASS.value))
-            self.image.blit(get_item_sprite_image(
+            self.image.blit(get_map_sprite_image(
                 pygame.image.load('assets/images/grass.png').convert_alpha(), (random.randint(0, 4), random.randint(0, 4))), (4, 4))
         else:
             self.image.fill(MAPCOLOR.WATER.rgb(MAPCOLOR.WATER.value))
@@ -36,8 +36,6 @@ class Block:
     def remove_item_from_top(self) -> None:
         if len(self.items) > 0:
             self.items.pop()
-
-            print("removed item from top")
             self.set_item_image()
 
     def set_item_image(self):
@@ -49,6 +47,12 @@ class Block:
 
         self.set_item_image()
         screen.blit(self.image, self.coords)
+
+    def on_block_check(self, coords):
+        if self.coords[0] <= coords[0] <= self.coords[0] + Block.size and self.coords[1] <= coords[1] <= self.coords[1] + Block.size:
+
+            return self
+        return None
 
 
 class GameMap:
@@ -62,3 +66,11 @@ class GameMap:
     def draw(self, screen):
         for block in self.blocks:
             block.draw(screen)
+
+    def on_block_check(self, coords) -> Block:
+        for block in self.blocks:
+            item = block.on_block_check(coords)
+            if item is not None:
+                # print("on block")
+                return item
+        return None
