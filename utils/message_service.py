@@ -13,6 +13,7 @@ class Message(TypedDict):
 
     text: str
     severity: str
+    duration: int
 
 
 class MessageService:

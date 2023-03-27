@@ -32,7 +32,9 @@ class Inventory:
         return False
 
     def remove_item_from_slot(self, slot: int):
+        removed_item = self.slots[slot]
         self.slots[slot] = None
+        return removed_item
 
 
 class InventoryHUD:

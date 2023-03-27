@@ -1,7 +1,7 @@
 {
     "items_stack_size": {
         "STONE": 32,
-        "WOOD": 1,
+        "WOOD": 2,
         "STICK": 1,
         "CARROT": 32,
         "BERRY": 1

@@ -16,8 +16,11 @@ class Character:
 
         }
 
-        self.hp = 100
+        self.hp = 20
         self.max_hp = 100
+
+        self.hunger = 0
+        self.max_hunger = 100
 
         self.inventory = Inventory()
 
@@ -36,6 +39,17 @@ class Character:
         self.current_time = 0
 
         self.position = (0, 0)
+
+        self.tick_count = 0
+
+    def tick(self):
+        self. tick_count += 1
+        if self.tick_count > 60:
+            self.tick_count = 0
+
+            if self.hunger <= 0:
+                if self.hp > 0:
+                    self.hp -= 1
 
     def load_sprite(self):
         img = pygame.image.load(Config.images["cat"]).convert_alpha()
@@ -122,6 +136,7 @@ class Character:
         self.current_time = 0
 
     def draw(self, screen):
+        self.tick()
         if self.hp <= 0:
             self.died(screen)
             return
@@ -162,3 +177,6 @@ class Character:
 
     def get_position(self):
         return (self.position[0] + self.sprites['idle'][0].get_width() // 2, self.position[1] + self.sprites['idle'][0].get_height() // 2)
+
+    def get_health(self):
+        return (self.hp, self.hunger)

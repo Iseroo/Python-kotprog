@@ -3,6 +3,7 @@ import pygame
 from pygame.locals import *
 import sys
 from utils.game_map import Block, GameMap
+from utils.health_bars import HealthBar
 from utils.inventory import InventoryHUD, Inventory
 from utils.map_reader import *
 from utils.message_service import *
@@ -41,6 +42,9 @@ class Game:
         self.load_items()
 
         self.character = Character()
+
+        self.health_bar = HealthBar(
+            (self.screen.get_width() // 2, self.screen.get_height()-80))
 
         self.player_info_text_display = PlayerInfoText(
             (self.character.get_position()[0], self.character.get_position()[1]-20))
@@ -83,19 +87,20 @@ class Game:
                     MessageService.add(
                         {"text": "Inventory is full", "severity": "error"})
                 if event.key == K_q:
-                    self.inventory.remove_item_from_slot(
+                    dropped_item = self.inventory.remove_item_from_slot(
                         self.inventory_hud.selected_slot)
                     self.inventory_hud.update_slots()
+                    if self.onblock and dropped_item:
+
+                        self.onblock.add_item(dropped_item)
+                        self.onblock.draw(self.map_layer)
                 if event.key == K_f:
                     if self.onblock:
-                        for item in self.onblock.items:
-                            if self.inventory.add_item_to_stack(item):
-                                self.onblock.remove_item_from_top()
-                                self.inventory_hud.update_slots()
-                                self.onblock.draw(self.map_layer)
-                                break
-                            else:
-                                break
+                        picked_up = self.onblock.remove_item_from_top()
+                        if picked_up:
+                            self.inventory.add_item_to_stack(picked_up)
+                            self.inventory_hud.update_slots()
+                            self.onblock.draw(self.map_layer)
 
             if event.type == pygame.MOUSEWHEEL:
                 if event.y > 0:
@@ -109,9 +114,11 @@ class Game:
 
     def update(self):
         self.onblock = self.game_map.on_block_check(
-            self.character.get_position())
+            self.character.get_position(), self.map_layer)
         self.player_info_text_display.set_coords(
             (self.character.get_position()[0], self.character.get_position()[1]-20))
+
+        self.health_bar.update(*self.character.get_health())
         pygame.display.flip()
 
     def draw(self):
@@ -122,16 +129,22 @@ class Game:
         self.screen.blit(self.screen_layer, self.camera_pos)
 
         self.inventory_hud.draw(self.screen)
+        self.health_bar.draw(self.screen)
 
     def message_service_subscribe(self):
         message = MessageService.next()
         if message:  # TODO: do something
             color = (249, 113, 50) if message["severity"] == "warning" else (
-                255, 0, 0) if message["severity"] == "error" else (0, 0, 0)
+                255, 0, 0) if message["severity"] == "error" else (255, 255, 255)
             text = TextDisplay(
                 message["text"], 12, color)
+            try:
 
-            self.player_info_text_display.add(text, duration=100)
+                duration = message["duration"]
+            except:
+                duration = 100
+            self.player_info_text_display.add(
+                text, duration)
 
     def make_map(self):
         self.game_map = GameMap()

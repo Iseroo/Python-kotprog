@@ -3,6 +3,7 @@ from typing import *
 import pygame
 import random
 from utils.map_reader import get_map_sprite_image
+from utils.message_service import MessageService
 
 
 class Block:
@@ -13,7 +14,7 @@ class Block:
         self.coords = coords
         self.type = type
         self.image = pygame.Surface((Block.size, Block.size))
-
+        self.display_text = ""
         self.reset_block_image()
 
     def reset_block_image(self):
@@ -35,8 +36,9 @@ class Block:
 
     def remove_item_from_top(self) -> None:
         if len(self.items) > 0:
-            self.items.pop()
+            removed_item = self.items.pop()
             self.set_item_image()
+            return removed_item
 
     def set_item_image(self):
         self.reset_block_image()
@@ -48,10 +50,14 @@ class Block:
         self.set_item_image()
         screen.blit(self.image, self.coords)
 
-    def on_block_check(self, coords):
-        if self.coords[0] <= coords[0] <= self.coords[0] + Block.size and self.coords[1] <= coords[1] <= self.coords[1] + Block.size:
+    def on_block_check(self, coords, screen=None):
 
+        if self.coords[0] <= coords[0] <= self.coords[0] + Block.size and self.coords[1] <= coords[1] <= self.coords[1] + Block.size:
+            if len(self.items) > 0:
+                MessageService.add(
+                    {"text": "Press F to pickup", "severity": "info", "duration": 1})
             return self
+
         return None
 
 
@@ -67,9 +73,9 @@ class GameMap:
         for block in self.blocks:
             block.draw(screen)
 
-    def on_block_check(self, coords) -> Block:
+    def on_block_check(self, coords, screen=None) -> Block:
         for block in self.blocks:
-            item = block.on_block_check(coords)
+            item = block.on_block_check(coords, screen=screen)
             if item is not None:
                 # print("on block")
                 return item
