@@ -1,0 +1,65 @@
+more items: 
+	
+	axe (4,6 ) | usage: 4 tick 
+	pickaxe (4, 5)
+	torch (10,10)
+	wood sword ( 5,0)
+	stone sword (5,1)
+	firepit ? (4,2)
+	mushrooms (x,12)
+	apple (x, 0)
+	
+pickup tick:
+	log: 4 tick, /w axe -> 2 db
+	stone: 5 tick, /w pickaxe -> 3db
+	stick: 2 tick -> 1db
+	food: 1 tick -> 1db
+	
+	
+time ticks: 
+	hunger -0.4
+	
+	
+player speed based on health:
+	50 - 100: 1x
+	30 <=  x < 50:  0.9
+	10 <= x < 30: 0.75
+	0 < x < 10: 0.6 
+	
+player speed based on hunger: 
+	50 - 100: 1x
+	20 <=  x < 50:  0.9
+	0 < x < 20: 0.8
+	0: 0.5 
+	
+food:
+	mushroom: hunger +20, hp: -5
+	carrot: +12, +1
+	berry: +10, +1
+	apple: +10, +3
+	
+	
+craft:
+	axe: 3 stick
+	pickaxe: 2 log, 2 stick
+	wood sword: 1 log, 5 stick
+	stone sword: 1 log, 5 stick, 3 stone
+	torch: 1 log, 3 stick
+	firepit: 2 stick, 2 log, 4 stone
+	
+usage time or live tick:
+	axe: 40 use
+	pickaxe: 30 use
+	wood sword: 10 use
+	stone sword: 30 use
+	torch: 20 tick
+	firepit: 60 tick
+	
+item damages:
+	hand / not weapon: 4 dmg
+	wood sword: 19
+	stone sword: 25
+	axe: 8
+	pickaxe: 8
+	torch: 3, +2dmg/tick for 3 tick
+	
