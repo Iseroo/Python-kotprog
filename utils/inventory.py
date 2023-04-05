@@ -45,6 +45,14 @@ class Inventory:
         removed_item = self.slots[slot]
         self.slots[slot] = None
         return removed_item
+    
+    def use_item(self, slot: int):
+        if self.slots[slot] is not None:
+            self.slots[slot].use()
+            if self.slots[slot].count <= 0:
+                self.slots[slot] = None
+            return True
+        return False
 
 
 class InventoryHUD:

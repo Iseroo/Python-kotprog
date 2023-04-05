@@ -110,6 +110,8 @@ class Game:
                             self.inventory.add_item_to_stack(picked_up)
                             self.inventory_hud.update_slots()
                             self.onblock.draw(self.map_layer)
+                if event.key == K_c:
+                    pass
 
             if event.type == pygame.MOUSEWHEEL:
                 if event.y > 0:

@@ -1,4 +1,5 @@
 from enum import Enum
+from utils.character import Character
 from utils.message_service import MessageService
 
 
@@ -54,3 +55,45 @@ class Item:
         self.max = stack_size
         self.item_image = item_image
         self.type = item_type
+        
+class Food(Item):
+    def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1, hunger: int = 0, health: int = 0) -> None:
+        super().__init__(item_image, item_type, stack_size)
+        self.hunger = hunger
+        self.health = health
+
+    def use(self, character: Character):
+        if self.count > 0: 
+            MessageService.add({"text": "You ate the " + self.type.name.lower() + ".", "severity": "info", "duration": 100})
+            self.count -= 1
+            character.hp += self.health
+            character.hunger += self.hunger
+        
+class Weapon(Item):
+    def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1, damage: int = 0, durability: int = 0) -> None:
+        super().__init__(item_image, item_type, stack_size)
+        self.damage = damage
+        self.durability = durability
+
+    def use(self, character: Character):
+        MessageService.add({"text": "You used the " + self.type.name.lower() + ".", "severity": "info", "duration": 100})
+        self.durability -= 1
+        character.hp -= self.damage
+        
+        
+class Material(Item):
+    def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1) -> None:
+        super().__init__(item_image, item_type, stack_size)
+
+    def use(self):
+        MessageService.add({"text": "You used the " + self.type.name.lower() + ".", "severity": "info", "duration": 100})
+        self.count -= 1
+
+class Tool(Item):
+    def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1, durability: int = 0) -> None:
+        super().__init__(item_image, item_type, stack_size)
+        self.durability = durability
+
+    def use(self):
+        MessageService.add({"text": "You used the " + self.type.name.lower() + ".", "severity": "info", "duration": 100})
+        self.durability -= 1
