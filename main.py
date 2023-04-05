@@ -21,6 +21,10 @@ class Game:
         self.screen = pygame.display.set_mode(
             (Config.data["screen_size"]["width"], Config.data["screen_size"]["height"]))
 
+        self.loadingScreen = pygame.image.load(Config.images["loading_screen"])
+        self.screen.blit(self.loadingScreen, (0, 0))
+        pygame.display.flip()
+
         self.clock = pygame.time.Clock()
         self.running = True
         self.img_size, self.png = read_map_image(
@@ -96,6 +100,11 @@ class Game:
                         self.onblock.draw(self.map_layer)
                 if event.key == K_f:
                     if self.onblock:
+                        if self.inventory.isFull:
+
+                            MessageService.add(
+                                {'text': "Inventory is full", "severity": "warning"})
+                            continue
                         picked_up = self.onblock.remove_item_from_top()
                         if picked_up:
                             self.inventory.add_item_to_stack(picked_up)
@@ -225,5 +234,7 @@ class Game:
 if __name__ == "__main__":
     Config.load("./config/config.json")
     Config.load_image_locations("./assets/image_locations.json")
+
     game = Game()
+
     game.run()

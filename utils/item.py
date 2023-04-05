@@ -38,6 +38,14 @@ class ITEM(Enum):
     BERRY = (14, 4)
     STICK = (12, 2)
     STONE = (17, 1)
+    AXE = (4, 6)
+    PICKAXE = (4, 5)
+    TORCH = (10, 10)
+    WOOD_SWORD = (5, 0)
+    STONE_SWORD = (5, 1)
+    FIREPIT = (4, 2)
+    MUSHROOM = (14, 12)
+    APPLE = (14, 0)
 
 
 class Item:

@@ -5,5 +5,6 @@
     "inventory_slot": "./assets/images/Inventory_Slot.png",
     "inventory_slot_selected": "./assets/images/Inventory_select.png",
     "items": "./assets/images/items.png",
-    "level00": "./assets/images/map/level00.png"
+    "level00": "./assets/images/map/level00.png",
+    "loading_screen": "./assets/images/loading_screen.png"
 }

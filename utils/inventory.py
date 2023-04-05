@@ -14,22 +14,32 @@ from utils.text_display import TextDisplay
 class Inventory:
     def __init__(self) -> None:
         self.slots: Dict[int, Item] = {x: None for x in range(10)}
+        self.isFull = False
 
     def add_item_to_stack(self, item: Item):
         for slot in self.slots:
             if self.slots[slot] is not None and self.slots[slot].type == item.type and self.slots[slot].count < self.slots[slot].max:
                 self.slots[slot].count += item.count
+                self.isFull = self.checkFull()
                 return True
 
         for slot in self.slots:
             if self.slots[slot] is None:
                 self.slots[slot] = item
+                self.isFull = self.checkFull()
                 return True
 
-        MessageService.add(
-            {'text': "Inventory is full", "severity": "warning"})
-
         return False
+
+    def checkFull(self):
+        for slot in self.slots:
+            if self.slots[slot] is None:
+                return False
+
+            elif self.slots[slot].count < self.slots[slot].max:
+                return False
+
+        return True
 
     def remove_item_from_slot(self, slot: int):
         removed_item = self.slots[slot]

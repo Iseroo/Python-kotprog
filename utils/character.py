@@ -13,14 +13,17 @@ class Character:
             'walk': [],
             'died': [],
             'idle': [],
+            'doing': []
 
         }
 
         self.hp = 20
         self.max_hp = 100
 
-        self.hunger = 0
+        self.hunger = 100
         self.max_hunger = 100
+
+        self.doing_percentage = 0
 
         self.inventory = Inventory()
 
@@ -34,6 +37,9 @@ class Character:
 
         self.die_generator = self.generate_died()
         self.died_speed = 10
+
+        self.doing_generator = self.generate_doing()
+        self.doingThing = False
 
         self.delay = Config.data["animation_delay"]
         self.current_time = 0
@@ -65,6 +71,10 @@ class Character:
         idle = Config.data["cat_sprite_indexes"]["idle"]
         self.sprites['idle'] = scale_sprites(get_item_sprite_image(
             img, idle['row'], idle['count']), 1.5)
+
+        doing = Config.data["cat_sprite_indexes"]["doing"]
+        self.sprites['doing'] = scale_sprites(get_item_sprite_image(
+            img, doing['row'], doing['count']), 1.5)
 
     def add_item_to_inventory(self, item: Item):
         for slot in self.inventory:
@@ -135,6 +145,36 @@ class Character:
         screen.blit(self.next_sprite, self.position)
         self.current_time = 0
 
+    def generate_doing(self):
+        for sprite in self.sprites["doing"]:
+            yield sprite
+
+    def doing(self, screen):
+        if self.next_sprite is None:
+            self.next_sprite = next(self.doing_generator)
+
+        if self.current_time < self.delay:
+            self.current_time += 1
+            self.doing_percentage += 1
+            if self.doing_percentage > self.next_sprite.get_width():
+                self.doing_percentage = 0
+            screen.blit(self.next_sprite, self.position)
+            return
+        try:
+            self.next_sprite = next(self.doing_generator)
+
+        except StopIteration:
+            self.doing_generator = self.generate_doing()
+            self.next_sprite = next(self.doing_generator)
+
+        screen.blit(self.next_sprite, self.position)
+        self.current_time = 0
+
+    def doing_bar(self):
+        bar = pygame.Surface((self.doing_percentage, 1))
+        bar.fill((255, 255, 255))
+        return bar
+
     def draw(self, screen):
         self.tick()
         if self.hp <= 0:
@@ -145,7 +185,13 @@ class Character:
 
         if self.wait_for_idle >= 5:
             self.wait_for_idle = 100
-            self.idle(screen)
+            if self.doingThing:
+                self.doing(screen=screen)
+
+                screen.blit(self.doing_bar(),
+                            (self.position[0], self.position[1] + self.next_sprite.get_height()+10))
+            else:
+                self.idle(screen)
         else:
             self.check_wall_boundries(screen)
             screen.blit(self.next_sprite, self.position)
