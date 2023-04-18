@@ -1,7 +1,6 @@
 from typing import *
 from utils.functions import get_item_sprite_image, scale_sprites
 from utils.inventory import Inventory
-from utils.item import Item
 import random
 import pygame
 from utils.config import Config
@@ -76,7 +75,7 @@ class Character:
         self.sprites['doing'] = scale_sprites(get_item_sprite_image(
             img, doing['row'], doing['count']), 1.5)
 
-    def add_item_to_inventory(self, item: Item):
+    def add_item_to_inventory(self, item):
         for slot in self.inventory:
             if self.inventory[slot] is None:
                 self.inventory[slot] = {'item': item, 'count': 1}

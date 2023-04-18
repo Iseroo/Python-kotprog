@@ -4,7 +4,6 @@ import random
 import pygame
 from utils.config import Config
 from utils.functions import scale_image
-from utils.item import Item
 from utils.message_service import MessageService
 from typing import *
 
@@ -13,10 +12,10 @@ from utils.text_display import TextDisplay
 
 class Inventory:
     def __init__(self) -> None:
-        self.slots: Dict[int, Item] = {x: None for x in range(10)}
+        self.slots = {x: None for x in range(10)}
         self.isFull = False
 
-    def add_item_to_stack(self, item: Item):
+    def add_item_to_stack(self, item):
         for slot in self.slots:
             if self.slots[slot] is not None and self.slots[slot].type == item.type and self.slots[slot].count < self.slots[slot].max:
                 self.slots[slot].count += item.count
@@ -45,7 +44,7 @@ class Inventory:
         removed_item = self.slots[slot]
         self.slots[slot] = None
         return removed_item
-    
+
     def use_item(self, slot: int):
         if self.slots[slot] is not None:
             self.slots[slot].use()
