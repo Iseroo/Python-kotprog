@@ -18,6 +18,8 @@ class TextDisplay:
         self.outline_surface = self.font.render(
             self.text, True, self.outline_color)
 
+        self.Surface = self.draw()
+
     def draw(self):
         surface = pygame.Surface(
             (self.text_rect.width+1, self.text_rect.height+1), pygame.SRCALPHA)

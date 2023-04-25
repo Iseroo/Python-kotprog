@@ -1,4 +1,6 @@
 from typing import *
+from utils.inventory import InventoryHUD, CraftingHUD
+from utils.message_service import MessageService
 from utils.functions import get_item_sprite_image, scale_sprites
 from utils.inventory import Inventory
 import random
@@ -7,7 +9,9 @@ from utils.config import Config
 
 
 class Character:
-    def __init__(self) -> None:
+    def __init__(self, player=True) -> None:
+        self.player = player
+
         self.sprites = {
             'walk': [],
             'died': [],
@@ -25,6 +29,11 @@ class Character:
         self.doing_percentage = 0
 
         self.inventory = Inventory()
+
+        self.inventory_hud = InventoryHUD(self.inventory)
+        self.inventory_hud.update_slots()
+
+        self.crafting_hud = CraftingHUD(self)
 
         self.load_sprite()
         self.idle_generator = self.generate_idle()
@@ -47,31 +56,45 @@ class Character:
 
         self.tick_count = 0
 
+        self.onblock = None
+
+    def add_hp(self, hp):
+        self.hp += hp if self.hp + hp < self.max_hp else self.max_hp - self.hp
+
+    def add_hunger(self, hunger):
+        self.hunger += hunger if self.hunger + \
+            hunger < self.max_hunger else self.max_hunger - self.hunger
+
     def tick(self):
-        self. tick_count += 1
+        self.tick_count += 1
         if self.tick_count > 60:
             self.tick_count = 0
-
+            self.hunger += Config.data["hunger_per_tick"] if self.hunger > 0 else 0
             if self.hunger <= 0:
                 if self.hp > 0:
-                    self.hp -= 1
+                    self.hp += Config.data["health_if_hungry"]
+
+    def add_event_to_craft_hud(self, event):
+        self.crafting_hud.add_event_to_box(event)
 
     def load_sprite(self):
-        img = pygame.image.load(Config.images["cat"]).convert_alpha()
+        cat_config = "cat_sprite_indexes" if self.player else "enemy_cat_sprite_indexes"
+        img = pygame.image.load(
+            Config.images["cat" if self.player else "enemy_cat"]).convert_alpha()
 
-        walk = Config.data["cat_sprite_indexes"]["walk"]
+        walk = Config.data[cat_config]["walk"]
         self.sprites['walk'] = scale_sprites(get_item_sprite_image(
             img, walk["row"], walk["count"]), 1.5)
 
-        died = Config.data["cat_sprite_indexes"]["died"]
+        died = Config.data[cat_config]["died"]
         self.sprites['died'] = scale_sprites(get_item_sprite_image(
             img, died['row'], died['count']), 1.5)
 
-        idle = Config.data["cat_sprite_indexes"]["idle"]
+        idle = Config.data[cat_config]["idle"]
         self.sprites['idle'] = scale_sprites(get_item_sprite_image(
             img, idle['row'], idle['count']), 1.5)
 
-        doing = Config.data["cat_sprite_indexes"]["doing"]
+        doing = Config.data[cat_config]["doing"]
         self.sprites['doing'] = scale_sprites(get_item_sprite_image(
             img, doing['row'], doing['count']), 1.5)
 
@@ -175,6 +198,10 @@ class Character:
         return bar
 
     def draw(self, screen):
+        if self.onblock and len(self.onblock.items) > 0 and self.player:
+            MessageService.add(
+                {"text": "Press F to pickup", "severity": "info", "duration": 1})
+
         self.tick()
         if self.hp <= 0:
             self.died(screen)
@@ -203,17 +230,18 @@ class Character:
         self.walk(direction)
         if direction == 'left':
             self.position = (self.position[0] - 1, self.position[1])
-        elif direction == 'right':
-            self.position = (self.position[0] + 1, self.position[1])
         elif direction == 'up':
             self.position = (self.position[0], self.position[1] - 1)
         elif direction == 'down':
             self.position = (self.position[0], self.position[1] + 1)
+        elif direction == 'right':
+            self.position = (self.position[0] + 1, self.position[1])
 
     def check_wall_boundries(self, screen):
         if self.position[0] < 0:
             self.position = (0, self.position[1])
         elif self.position[0] > screen.get_width() - self.next_sprite.get_width():
+
             self.position = (screen.get_width() -
                              self.next_sprite.get_width(), self.position[1])
 
@@ -225,3 +253,52 @@ class Character:
 
     def get_health(self):
         return (self.hp, self.hunger)
+
+    def set_onblock(self, block):
+        self.onblock = block
+
+    def pickup(self, map_layer):
+        if self.onblock:
+            if self.inventory.isFull:
+
+                MessageService.add(
+                    {'text': "Inventory is full", "severity": "warning"})
+                return False
+            picked_up = self.onblock.remove_item_from_top()
+            if picked_up:
+                self.inventory.add_item_to_stack(picked_up)
+                self.onblock.draw(map_layer)
+                self.inventory_hud.update_slots()
+                return True
+        return False
+
+    def use_slot(self):
+        if self.inventory.slots[self.inventory_hud.selected_slot]:
+            self.inventory.slots[self.inventory_hud.selected_slot].use(self)
+
+
+class Enemy(Character):
+    def __init__(self) -> None:
+        super().__init__(player=False)
+        self.todo_stack = []
+
+    def ai(self, map_layer, other_characters=None, near_objects=None):
+
+        if self.onblock and len(self.onblock.items):
+            self.pickup(map_layer)
+
+    def get_inventory(self):
+        return self.inventory
+
+    def auto_move_to_pos(self, pos):
+        if self.hp <= 0:
+            return
+
+        if self.position[0] < pos[0]:
+            self.move('right')
+        elif self.position[0] > pos[0]:
+            self.move('left')
+        if self.position[1] < pos[1]:
+            self.move('down')
+        if self.position[1] > pos[1]:
+            self.move('up')

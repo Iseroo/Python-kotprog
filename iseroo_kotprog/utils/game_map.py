@@ -10,12 +10,17 @@ class Block:
     size = 40
 
     def __init__(self, coords, type: MAPCOLOR) -> None:
+
         self.items: MutableSequence[Item] = []
         self.coords = coords
+        self.indexes = self.calc_indexes()
         self.type = type
         self.image = pygame.Surface((Block.size, Block.size))
         self.display_text = ""
         self.reset_block_image()
+
+    def calc_indexes(self):
+        return (self.coords[0] // Block.size, self.coords[1] // Block.size)
 
     def reset_block_image(self):
         if self.type != MAPCOLOR.WATER:
@@ -53,9 +58,6 @@ class Block:
     def on_block_check(self, coords, screen=None):
 
         if self.coords[0] <= coords[0] <= self.coords[0] + Block.size and self.coords[1] <= coords[1] <= self.coords[1] + Block.size:
-            if len(self.items) > 0:
-                MessageService.add(
-                    {"text": "Press F to pickup", "severity": "info", "duration": 1})
             return self
 
         return None
@@ -79,4 +81,16 @@ class GameMap:
             if item is not None:
                 # print("on block")
                 return item
+        return None
+
+    def get_block_by_coords(self, coords) -> Block:
+        for block in self.blocks:
+            if block.coords[0] <= coords[0] <= block.coords[0] + Block.size and block.coords[1] <= coords[1] <= block.coords[1] + Block.size:
+                return block
+        return None
+
+    def get_block_by_indexes(self, indexes) -> Block:
+        for block in self.blocks:
+            if block.indexes == indexes:
+                return block
         return None

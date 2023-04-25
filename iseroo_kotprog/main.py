@@ -4,29 +4,38 @@ from pygame.locals import *
 import sys
 from utils.game_map import Block, GameMap
 from utils.health_bars import HealthBar
-from utils.inventory import InventoryHUD, Inventory
+from utils.inventory import InventoryHUD, Inventory, CraftingHUD
 from utils.map_reader import *
 from utils.message_service import *
 from utils.item import *
 from utils.config import Config
 import webcolors
-from utils.character import Character
+from utils.character import Character, Enemy
 from utils.text_display import PlayerInfoText, TextDisplay
+from utils.box import Box
 
 pygame.init()
 
 
 class Game:
+
     def __init__(self):
         self.screen = pygame.display.set_mode(
             (Config.data["screen_size"]["width"], Config.data["screen_size"]["height"]))
-
+        Config.screen = self.screen
+        self.loading_text = TextDisplay(
+            "Loading...", 30, (255, 255, 255))
         self.loadingScreen = pygame.image.load(Config.images["loading_screen"])
-        self.screen.blit(self.loadingScreen, (0, 0))
+        self.screen.blit(self.loadingScreen, (self.screen.get_width()//2 -
+                                              self.loadingScreen.get_width()//2, self.screen.get_height()//2 - self.loadingScreen.get_height()//2))
+        self.screen.blit(self.loading_text.Surface, (self.screen.get_width()//2 - self.loading_text.Surface.get_width() //
+                         2, self.screen.get_height()//2 - self.loading_text.Surface.get_height()//2 - 200))
         pygame.display.flip()
 
         self.clock = pygame.time.Clock()
         self.running = True
+        self.craftHud_toggle = False
+
         self.img_size, self.png = read_map_image(
             Config.images["level00"])
 
@@ -46,6 +55,15 @@ class Game:
         self.load_items()
 
         self.character = Character()
+        self.character.add_event_to_craft_hud(
+            self.toggle_craft_hud)
+
+        self.enemies = [Enemy() for _ in range(0)]
+        for x in self.enemies:
+            x.position = self.game_map.get_block_by_indexes(
+                (random.randint(5, 30), random.randint(5, 30))).coords
+        # self.enemies[0].position = self.game_map.get_block_by_indexes(
+        #     (10, 10)).coords
 
         self.health_bar = HealthBar(
             (self.screen.get_width() // 2, self.screen.get_height()-80))
@@ -53,25 +71,33 @@ class Game:
         self.player_info_text_display = PlayerInfoText(
             (self.character.get_position()[0], self.character.get_position()[1]-20))
 
-        self.inventory = Inventory()
-
-        self.inventory.add_item_to_stack(
-            Item(self.items['CARROT'], 'CARROT', 1))
-
-        self.inventory_hud = InventoryHUD(self.inventory)
-        self.inventory_hud.update_slots()
-
         self.onblock = None
+
+        self.game_over = False
+        self.game_over_text = TextDisplay("Game Over", 24, (255, 0, 0))
+        self.game_over_dialog = Box(
+            (self.screen.get_width(), self.screen.get_height()), False)
+        self.game_over_dialog.add_element(self.game_over_text.Surface, (self.game_over_dialog.Surface.get_width(
+        )//2-self.game_over_text.Surface.get_width()//2, self.game_over_dialog.Surface.get_height()//2-self.game_over_text.Surface.get_height()//2))
 
     def run(self):
 
         while self.running:
+            Config.cursor_style = None
             self.clock.tick(60)
             self.move_camera()
             self.move_character()
             pygame.display.set_caption("FPS: " + str(self.clock.get_fps()))
             self.draw()
+
             self.handle_events()
+            # print(self.game_map.get_block_by_coords(
+            # pygame.mouse.get_pos()).indexes)
+            self.enemy_ai_updates()
+            if Config.cursor_style:
+                pygame.mouse.set_cursor(Config.cursor_style)
+            else:
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
             self.update()
 
     def handle_events(self):
@@ -91,56 +117,82 @@ class Game:
                     MessageService.add(
                         {"text": "Inventory is full", "severity": "error"})
                 if event.key == K_q:
-                    dropped_item = self.inventory.remove_item_from_slot(
-                        self.inventory_hud.selected_slot)
-                    self.inventory_hud.update_slots()
-                    if self.onblock and dropped_item:
+                    dropped_item = self.character.inventory.remove_item_from_slot(
+                        self.character.inventory_hud.selected_slot)
+                    self.character.inventory_hud.update_slots()
+                    if self.character.onblock and dropped_item:
 
-                        self.onblock.add_item(dropped_item)
-                        self.onblock.draw(self.map_layer)
+                        self.character.onblock.add_item(dropped_item)
+                        self.character.onblock.draw(self.map_layer)
                 if event.key == K_f:
-                    if self.onblock:
-                        if self.inventory.isFull:
+                    self.character.pickup(self.map_layer)
 
-                            MessageService.add(
-                                {'text': "Inventory is full", "severity": "warning"})
-                            continue
-                        picked_up = self.onblock.remove_item_from_top()
-                        if picked_up:
-                            self.inventory.add_item_to_stack(picked_up)
-                            self.inventory_hud.update_slots()
-                            self.onblock.draw(self.map_layer)
                 if event.key == K_c:
-                    pass
+                    self.character.use_slot()
+
+                if event.key == K_e:
+                    self.toggle_craft_hud()
 
             if event.type == pygame.MOUSEWHEEL:
                 if event.y > 0:
-                    self.inventory_hud.select_slot(
-                        self.inventory_hud.selected_slot + 1)
+                    self.character.inventory_hud.select_slot(
+                        self.character.inventory_hud.selected_slot + 1)
                 elif event.y < 0:
-                    self.inventory_hud.select_slot(
-                        self.inventory_hud.selected_slot - 1)
+                    self.character.inventory_hud.select_slot(
+                        self.character.inventory_hud.selected_slot - 1)
 
         self.message_service_subscribe()
 
+    def enemy_ai_updates(self):
+        for enemy in self.enemies:
+            enemy.auto_move_to_pos(self.character.position)
+
+        for enemy in self.enemies:
+            enemy.ai(self.map_layer)
+
     def update(self):
-        self.onblock = self.game_map.on_block_check(
-            self.character.get_position(), self.map_layer)
+        self.character.set_onblock(self.onblock_for_character(self.character))
+        # self.enemy.set_onblock(self.onblock_for_character(self.enemy))
+        for enemy in self.enemies:
+            enemy.set_onblock(self.onblock_for_character(enemy))
+
         self.player_info_text_display.set_coords(
             (self.character.get_position()[0], self.character.get_position()[1]-20))
 
         self.health_bar.update(*self.character.get_health())
+
+        if self.character.get_health()[0] <= 0:
+            self.game_over = True
+            self.character.position = (
+                self.screen.get_width()//2-self.character.next_sprite.get_width()//2, self.screen.get_height()//2-100)
         pygame.display.flip()
 
+    def onblock_for_character(self, character):
+        return self.game_map.on_block_check(character.get_position(), self.map_layer)
+
     def draw(self):
+        if self.game_over:
+            self.screen.blit(self.game_over_dialog.Surface, (0, 0))
+            self.character.draw(self.screen)
+            return
         self.screen.fill(MAPCOLOR.GRASS.rgb(MAPCOLOR.GRASS.value))
         self.screen_layer.blit(self.map_layer, (0, 0))
         self.character.draw(self.screen_layer)
+        # self.enemy.draw(self.screen_layer)
+        for enemy in self.enemies:
+            # print(self.screen_layer)
+            enemy.draw(self.screen_layer)
         self.player_info_text_display.draw(self.screen_layer)
         self.screen.blit(self.screen_layer, self.camera_pos)
 
-        self.inventory_hud.draw(self.screen)
+        self.character.inventory_hud.draw(self.screen)
+
         self.health_bar.draw(self.screen)
+
+        if self.craftHud_toggle:
+            self.character.crafting_hud.draw(self.screen)
+
+        # [self.screen.blit(box(), (0, 0)) for box in self.boxes]
 
     def message_service_subscribe(self):
         message = MessageService.next()
@@ -172,8 +224,12 @@ class Game:
                     block)
 
                 if mapcolor != MAPCOLOR.GRASS and mapcolor != MAPCOLOR.WATER:
-                    block.add_item(Item(get_map_sprite_image(
-                        sprite_sheet, ITEM[mapcolor.name].value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name]))
+                    if mapcolor == MAPCOLOR.BERRY:
+                        block.add_item(Food(get_map_sprite_image(
+                            sprite_sheet, ITEM[mapcolor.name].value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name], Config.data["food_health_bonus"]["BERRY"][0], Config.data["food_health_bonus"]["BERRY"][1]))
+                    else:
+                        block.add_item(Item(get_map_sprite_image(
+                            sprite_sheet, ITEM[mapcolor.name].value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name]))
 
     def move_camera(self):
         keys = pygame.key.get_pressed()
@@ -211,6 +267,7 @@ class Game:
                                Config.data["screen_size"]["height"] - Config.data["camera_offset"]["y"])
 
     def move_character(self):  # move with wasd
+
         keys = pygame.key.get_pressed()
 
         if keys[K_a]:
@@ -232,10 +289,14 @@ class Game:
             self.items[item.name] = get_map_sprite_image(
                 sprite_sheet, ITEM[item.name].value)
 
+    def toggle_craft_hud(self):
+        self.craftHud_toggle = not self.craftHud_toggle
+
 
 if __name__ == "__main__":
     Config.load("./config/config.json")
     Config.load_image_locations("./assets/image_locations.json")
+    Config.cursor_style
 
     game = Game()
 

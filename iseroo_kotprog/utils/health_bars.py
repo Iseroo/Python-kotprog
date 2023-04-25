@@ -1,4 +1,5 @@
 import pygame
+from utils.text_display import TextDisplay
 
 
 class HealthBar:
@@ -12,6 +13,11 @@ class HealthBar:
 
         self.hp_surface = pygame.Surface((self.bar_widht, self.bar_height))
         self.hunger_surface = pygame.Surface((self.bar_widht, self.bar_height))
+
+        self.hp_text = TextDisplay("HP", 12, (255, 255, 255)).draw()
+
+        self.hunger_text = TextDisplay("Éhség", 12, (255, 255, 255)).draw()
+
         self.make_bar_surfaces()
 
     @property
@@ -59,3 +65,6 @@ class HealthBar:
         screen.blit(self.hp_surface, position)
         screen.blit(self.hunger_surface,
                     (position[0] + self.hp_surface.get_width() + self.bar_gap, position[1]))
+        screen.blit(self.hp_text, (position[0], position[1] - 15))
+        screen.blit(self.hunger_text,
+                    (position[0] + 200, position[1] - 15))

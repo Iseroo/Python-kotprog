@@ -2,9 +2,17 @@
     "items_stack_size": {
         "STONE": 32,
         "WOOD": 32,
-        "STICK": 1,
+        "STICK": 32,
         "CARROT": 32,
-        "BERRY": 1
+        "BERRY": 1,
+        "APPLE": 3,
+        "MUSHROOM": 1,
+        "WOOD_SWORD": 1,
+        "STONE_SWORD": 1,
+        "AXE": 1,
+        "PICKAXE": 1,
+        "FIREPIT": 1,
+        "TORCH": 1
     },
 
     "player": {
@@ -19,6 +27,13 @@
         "doing": { "row": 15, "count": 4 }
     },
 
+    "enemy_cat_sprite_indexes": {
+        "walk": { "row": 4, "count": 8 },
+        "idle": { "row": 0, "count": 8 },
+        "died": { "row": 36, "count": 4 },
+        "doing": { "row": 10, "count": 4 }
+    },
+
     "animation_delay": 10,
 
     "camera_offset": {
@@ -27,9 +42,11 @@
     },
 
     "screen_size": {
-        "width": 800,
-        "height": 600
+        "width": 1000,
+        "height": 800
     },
+
+    "scale_multiplier": 1.0,
 
     "pickup_ticks": {
         "STONE": 5,
@@ -41,7 +58,8 @@
         "MUSHROOM": 1
     },
 
-    "hunger_per_tick": -0.4,
+    "hunger_per_tick": -90,
+    "health_if_hungry": -10,
 
     "food_health_bonus": {
         "CARROT": [12, 1],
@@ -52,13 +70,13 @@
 
     "craft_items": {
         "WOOD_SWORD": {
-            "WOOD": 2,
-            "STICK": 5
+            "WOOD": 1
         },
         "STONE_SWORD": {
             "WOOD": 1,
             "STONE": 3,
-            "STICK": 5
+            "STICK": 5,
+            "WOOD_SWORD": 1
         },
         "AXE": {
             "STICK": 3
@@ -75,6 +93,9 @@
         "TORCH": {
             "WOOD": 1,
             "STICK": 3
+        },
+        "APPLE": {
+            "STICK": 1
         }
     }
 }

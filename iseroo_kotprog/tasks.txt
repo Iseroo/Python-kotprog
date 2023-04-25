@@ -38,7 +38,12 @@ food:
 	berry: +10, +1
 	apple: +10, +3
 	
+firepit:
 	
+	+1 hp/tick if hunger is >50%
+	+1 hp/tick if hp is >50%
+
+
 craft:
 	axe: 3 stick
 	pickaxe: 2 log, 2 stick

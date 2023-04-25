@@ -16,5 +16,7 @@ def get_map_sprite_image(sprite_sheet: pygame.Surface, index: tuple, sprite_size
     sprite = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
     sprite.blit(sprite_sheet, (0, 0),
                 (index[1] * sprite_size, index[0] * sprite_size, sprite_size, sprite_size))
+    # add black border to sprite
+    # pygame.draw.rect(sprite, (0, 0, 0), (0, 0, sprite_size, sprite_size), 1)
 
     return sprite
