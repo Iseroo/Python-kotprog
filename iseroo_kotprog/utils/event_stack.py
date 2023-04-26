@@ -30,8 +30,9 @@ class EventStack:
         # print(event, event in EventStack.stack)
         try:
             EventStack.stack.remove(event)
+            print("removed")
         except:
-            pass
+            print("Not in")
 
     def peek():
 

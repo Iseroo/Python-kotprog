@@ -2,7 +2,7 @@
 
 import random
 import pygame
-from utils.event_stack import WindowStack
+from utils.event_stack import Event, EventStack, WindowStack
 from utils.box import Box
 from utils.config import Config
 from utils.functions import scale_image
@@ -151,6 +151,8 @@ class CraftingHUD:
         self.to_craft = None
 
         self.callback = None
+        
+        self.opened = False
 
         self.update()
         self.update_craftable_items()
@@ -189,6 +191,8 @@ class CraftingHUD:
         self.hud_surface.blit(
 
             self.arrow, (int(self.slot_img.get_width() * 3.1), self.slot_img.get_height()))
+    
+        self.box.reset_and_add(self.hud_surface, (0,0))
 
     def update_craftable_items(self):
         self.craftable_items_hud = self.inv_bar.copy()
@@ -266,3 +270,11 @@ class CraftingHUD:
                     self.update()
                     self.update_craftable_items()
                     return
+
+    @property
+    def Surface(self):
+        
+        self.mouse_on_item(pygame.mouse.get_pos(), Config.screen)
+        self.craft(Config.screen)
+        
+        return self.box

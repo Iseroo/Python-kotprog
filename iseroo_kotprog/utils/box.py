@@ -7,14 +7,23 @@ from utils.event_stack import *
 class Box:
     def __init__(self, size, close_button=True, close_callback=None) -> None:
         self.size = size
+        self.close_button = close_button
+        self.close_callback = close_callback
         self.Surface = pygame.Surface(size, pygame.SRCALPHA)
         self.Surface.fill((254, 211, 127))
-        self._close_callback = None
-        self.close_callback = close_callback
-        self.position = (0, 0)
-        self.close_button = close_button
         self.add_border()
+        self._close_callback = None
+        self.position = (0, 0)
         self.opened = False
+        
+        self.event_mouse_on = Event("Box_close_mouse_on", self.mouse_on_close)
+        self.event_close = Event("close", self.close)
+        EventStack.push(self.event_mouse_on)
+        EventStack.push(self.event_close)
+    def reset_Surface(self):
+        self.Surface = pygame.Surface(self.size, pygame.SRCALPHA)
+        self.Surface.fill((254, 211, 127))
+        self.add_border()
 
     @property
     def close_callback(self):
@@ -24,14 +33,13 @@ class Box:
     def close_callback(self, value):
         self._close_callback = value
 
-        self.event_mouse_on = Event("Box_close_mouse_on", self.mouse_on_close)
-        EventStack.push(self.event_mouse_on)
-
-        self.event_close = Event("close", self.close)
-        EventStack.push(self.event_close)
-
     def add_element(self, element, pos):
         self.Surface.blit(element, pos)
+        
+    def reset_and_add(self, element, pos):
+        self.reset_Surface()
+        self.Surface.blit(element, pos)
+        
 
     def add_border(self):
         # draw border left, right, bottom is 2px wide and rgb(51,32,24), top is 2px wide and rbg(76,48,36). innerborder 4px wide, and rbg(153,69,63)
@@ -60,7 +68,7 @@ class Box:
     def close(self):
         self.opened = False
         if self.close_callback:
-            # print("close")
+            print("close")  
 
             self.close_callback()
             EventStack.remove(self.event_mouse_on)
@@ -75,11 +83,10 @@ class Box:
                 self.close()
 
     def __call__(self, position):
-        self.event_mouse_on = Event("Box_close_mouse_on", self.mouse_on_close)
-        EventStack.push(self.event_mouse_on)
-
-        self.event_close = Event("close", self.close)
-        EventStack.push(self.event_close)
+        if self.event_mouse_on not in EventStack.stack:
+            EventStack.push(self.event_mouse_on)
+        if self.event_close not in EventStack.stack:
+            EventStack.push(self.event_close)
         if not self.close_button:
             return
         self.position = position

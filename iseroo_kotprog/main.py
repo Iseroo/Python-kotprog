@@ -32,6 +32,7 @@ class Game:
         self.screen.blit(self.loading_text.Surface, (self.screen.get_width()//2 - self.loading_text.Surface.get_width() //
                          2, self.screen.get_height()//2 - self.loading_text.Surface.get_height()//2 - 200))
         pygame.display.flip()
+        EventStack.push(Event("close", self.close))
 
         self.clock = pygame.time.Clock()
         self.running = True
@@ -56,8 +57,7 @@ class Game:
         self.load_items()
 
         self.character = Character()
-        self.character.add_event_to_craft_hud(
-            self.toggle_craft_hud)
+        
 
         self.enemies = [Enemy() for _ in range(0)]
         for x in self.enemies:
@@ -87,9 +87,15 @@ class Game:
         self.random_box.position = (self.screen.get_width()//2-100,
                                     self.screen.get_height()//2-100)
         self.random_box.opened = True
+        self.rnd_box_events = [Event(
+                    "Box_close_mouse_on", self.random_box, self.random_box.position), Event(
+                    "close", self.random_box_visible)]
+
 
     def random_box_visible(self):
         self.random_box_is_visible = False
+        self.random_box.opened = False
+
 
     def close(self):
         self.running = False
@@ -97,16 +103,13 @@ class Game:
         sys.exit()
 
     def run(self):
+        
+        
 
         while self.running:
-            EventStack.stack = [Event("close", self.close)]
-
-            if self.random_box_is_visible:
-                EventStack.stack.append(Event(
-                    "Box_close_mouse_on", self.random_box, self.random_box.position))
-                EventStack.stack.append(Event(
-                    "close", self.random_box_visible))
-            WindowStack.stack = []
+            print(EventStack.stack)
+               
+            
             Config.cursor_style = None
             self.clock.tick(60)
             self.move_camera()
@@ -155,7 +158,8 @@ class Game:
                     self.character.use_slot()
 
                 if event.key == K_e:
-                    self.toggle_craft_hud()
+                    self.character.crafting_hud.opened = not self.character.crafting_hud.opened
+                    # self.toggle_craft_hud()
 
             if event.type == pygame.MOUSEWHEEL:
                 if event.y > 0:
@@ -164,7 +168,8 @@ class Game:
                 elif event.y < 0:
                     self.character.inventory_hud.select_slot(
                         self.character.inventory_hud.selected_slot - 1)
-        EventStack.find_and_call("Box_close_mouse_on")
+        
+        EventStack.find_and_call("Box_close_mouse_on") #TODO: if opened
         self.message_service_subscribe()
 
     def enemy_ai_updates(self):
@@ -221,10 +226,10 @@ class Game:
             if dialog.opened:
                 self.screen.blit(dialog.Surface, dialog.position)
 
-        self.character.crafting_hud.box.opened = self.craftHud_toggle
-        if self.craftHud_toggle:
+        
+        if self.character.crafting_hud.box.opened:
 
-            self.character.crafting_hud.draw(self.screen)
+            self.screen.blit(self.character.crafting_hud.Surface,self.character.crafting_hud.Surface.position )
 
         # if self.random_box_visible:
         #     self.screen.blit(self.random_box(), self.random_box.position)
@@ -325,9 +330,6 @@ class Game:
         for item in ITEM:
             self.items[item.name] = get_map_sprite_image(
                 sprite_sheet, ITEM[item.name].value)
-
-    def toggle_craft_hud(self):
-        self.craftHud_toggle = not self.craftHud_toggle
 
 
 if __name__ == "__main__":
