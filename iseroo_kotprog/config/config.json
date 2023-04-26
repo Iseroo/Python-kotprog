@@ -58,14 +58,14 @@
         "MUSHROOM": 1
     },
 
-    "hunger_per_tick": -90,
-    "health_if_hungry": -10,
+    "hunger_per_tick": -10,
+    "health_if_hungry": -0,
 
     "food_health_bonus": {
         "CARROT": [12, 1],
         "BERRY": [10, 1],
-        "APPLE": [10, 3],
-        "MUSHROOM": [20, -5]
+        "APPLE": [10, 20],
+        "MUSHROOM": [50, -10]
     },
 
     "craft_items": {

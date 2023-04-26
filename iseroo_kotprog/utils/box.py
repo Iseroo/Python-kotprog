@@ -1,17 +1,34 @@
 
 import pygame
 from utils.config import Config
+from utils.event_stack import *
 
 
 class Box:
-    def __init__(self, size, close_button=True) -> None:
+    def __init__(self, size, close_button=True, close_callback=None) -> None:
         self.size = size
         self.Surface = pygame.Surface(size, pygame.SRCALPHA)
         self.Surface.fill((254, 211, 127))
-        self.close_callback = None
+        self._close_callback = None
+        self.close_callback = close_callback
         self.position = (0, 0)
         self.close_button = close_button
         self.add_border()
+        self.opened = False
+
+    @property
+    def close_callback(self):
+        return self._close_callback
+
+    @close_callback.setter
+    def close_callback(self, value):
+        self._close_callback = value
+
+        self.event_mouse_on = Event("Box_close_mouse_on", self.mouse_on_close)
+        EventStack.push(self.event_mouse_on)
+
+        self.event_close = Event("close", self.close)
+        EventStack.push(self.event_close)
 
     def add_element(self, element, pos):
         self.Surface.blit(element, pos)
@@ -37,22 +54,35 @@ class Box:
             pygame.draw.line(self.Surface, (0, 0, 0),
                              (self.size[0], 0), (self.size[0]-20, 20), 2)
 
-    def set_close_event(self, event): self.close_callback = event
+    def set_close_event(self, event):
+        self.close_callback = event
 
     def close(self):
+        self.opened = False
         if self.close_callback:
+            # print("close")
+
             self.close_callback()
+            EventStack.remove(self.event_mouse_on)
+            EventStack.remove(self.event_close)
 
     def mouse_on_close(self):
         mouse_pos = pygame.mouse.get_pos()
         if mouse_pos[0] > self.position[0] + self.size[0]-20 and mouse_pos[0] < self.position[0] + self.size[0] and mouse_pos[1] > self.position[1] and mouse_pos[1] < self.position[1] + 20:
             Config.cursor_style = pygame.SYSTEM_CURSOR_HAND
             if pygame.mouse.get_pressed()[0]:
+
                 self.close()
 
     def __call__(self, position):
+        self.event_mouse_on = Event("Box_close_mouse_on", self.mouse_on_close)
+        EventStack.push(self.event_mouse_on)
+
+        self.event_close = Event("close", self.close)
+        EventStack.push(self.event_close)
         if not self.close_button:
             return
         self.position = position
         self.mouse_on_close()
+
         return self.Surface

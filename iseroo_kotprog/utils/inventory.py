@@ -2,6 +2,7 @@
 
 import random
 import pygame
+from utils.event_stack import WindowStack
 from utils.box import Box
 from utils.config import Config
 from utils.functions import scale_image
@@ -162,9 +163,10 @@ class CraftingHUD:
         self.result = self.slot_img.copy()
 
     def draw(self, screen: pygame.Surface):
-        box_pos = (screen.get_width() // 2 - self.box.size[0] // 2,
-                   screen.get_height()//2 - self.box.size[1]//2)
-        screen.blit(self.box(box_pos), box_pos)
+        self.box.position = (screen.get_width() // 2 - self.box.size[0] // 2,
+                             screen.get_height()//2 - self.box.size[1]//2)
+
+        self.box.opened = True
 
         screen.blit(self.hud_surface, (screen.get_width() // 2 - self.hud_surface.get_width() // 2,
                                        screen.get_height()//2 - self.hud_surface.get_height()//2))

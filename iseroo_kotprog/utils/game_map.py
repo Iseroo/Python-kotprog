@@ -55,6 +55,15 @@ class Block:
         self.set_item_image()
         screen.blit(self.image, self.coords)
 
+    def mouse_on_block(self):
+        if len(self.items) == 0:
+            return False
+        mouse_pos = pygame.mouse.get_pos()
+        if self.coords[0] <= mouse_pos[0] <= self.coords[0] + Block.size and self.coords[1] <= mouse_pos[1] <= self.coords[1] + Block.size:
+            print(self.items[0].type)
+            return True
+        return False
+
     def on_block_check(self, coords, screen=None):
 
         if self.coords[0] <= coords[0] <= self.coords[0] + Block.size and self.coords[1] <= coords[1] <= self.coords[1] + Block.size:
@@ -77,6 +86,7 @@ class GameMap:
 
     def on_block_check(self, coords, screen=None) -> Block:
         for block in self.blocks:
+            block.mouse_on_block()
             item = block.on_block_check(coords, screen=screen)
             if item is not None:
                 # print("on block")

@@ -20,7 +20,7 @@ class Character:
 
         }
 
-        self.hp = 20
+        self.hp = 100
         self.max_hp = 100
 
         self.hunger = 100
@@ -228,14 +228,33 @@ class Character:
 
         self.wait_for_idle = 0
         self.walk(direction)
+        speed_modifier = 1
+        if self.hp < 50 and self.hp >= 30:
+            speed_modifier = 0.9
+        elif self.hp < 30 and self.hp >= 10:
+            speed_modifier = 0.75
+        elif self.hp < 10:
+            speed_modifier = 0.6
+
+        if self.hunger < 50 and self.hunger >= 20:
+            speed_modifier *= 0.9
+        elif self.hunger < 20 and self.hunger > 0:
+            speed_modifier *= 0.8
+        elif self.hunger <= 0:
+            speed_modifier *= 0.5
+
         if direction == 'left':
-            self.position = (self.position[0] - 1, self.position[1])
+            self.position = (self.position[0] -
+                             1*speed_modifier, self.position[1])
         elif direction == 'up':
-            self.position = (self.position[0], self.position[1] - 1)
+            self.position = (self.position[0],
+                             self.position[1] - 1*speed_modifier)
         elif direction == 'down':
-            self.position = (self.position[0], self.position[1] + 1)
+            self.position = (self.position[0],
+                             self.position[1] + 1*speed_modifier)
         elif direction == 'right':
-            self.position = (self.position[0] + 1, self.position[1])
+            self.position = (self.position[0] +
+                             1*speed_modifier, self.position[1])
 
     def check_wall_boundries(self, screen):
         if self.position[0] < 0:

@@ -13,6 +13,7 @@ import webcolors
 from utils.character import Character, Enemy
 from utils.text_display import PlayerInfoText, TextDisplay
 from utils.box import Box
+from utils.event_stack import *
 
 pygame.init()
 
@@ -76,13 +77,36 @@ class Game:
         self.game_over = False
         self.game_over_text = TextDisplay("Game Over", 24, (255, 0, 0))
         self.game_over_dialog = Box(
-            (self.screen.get_width(), self.screen.get_height()), False)
+            (self.screen.get_width(), self.screen.get_height()), close_callback=self.close)
         self.game_over_dialog.add_element(self.game_over_text.Surface, (self.game_over_dialog.Surface.get_width(
         )//2-self.game_over_text.Surface.get_width()//2, self.game_over_dialog.Surface.get_height()//2-self.game_over_text.Surface.get_height()//2))
+
+        self.random_box_is_visible = True
+        self.random_box = Box(
+            (200, 200), close_callback=self.random_box_visible)
+        self.random_box.position = (self.screen.get_width()//2-100,
+                                    self.screen.get_height()//2-100)
+        self.random_box.opened = True
+
+    def random_box_visible(self):
+        self.random_box_is_visible = False
+
+    def close(self):
+        self.running = False
+        pygame.quit()
+        sys.exit()
 
     def run(self):
 
         while self.running:
+            EventStack.stack = [Event("close", self.close)]
+
+            if self.random_box_is_visible:
+                EventStack.stack.append(Event(
+                    "Box_close_mouse_on", self.random_box, self.random_box.position))
+                EventStack.stack.append(Event(
+                    "close", self.random_box_visible))
+            WindowStack.stack = []
             Config.cursor_style = None
             self.clock.tick(60)
             self.move_camera()
@@ -101,6 +125,7 @@ class Game:
             self.update()
 
     def handle_events(self):
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 self.running = False
@@ -108,9 +133,8 @@ class Game:
                 sys.exit()
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    self.running = False
-                    pygame.quit()
-                    sys.exit()
+                    EventStack.call_and_pop("close")
+
                 if event.key == K_SPACE:
                     MessageService.add(
                         {"text": "Inventory is full", "severity": "warning"})
@@ -140,7 +164,7 @@ class Game:
                 elif event.y < 0:
                     self.character.inventory_hud.select_slot(
                         self.character.inventory_hud.selected_slot - 1)
-
+        EventStack.find_and_call("Box_close_mouse_on")
         self.message_service_subscribe()
 
     def enemy_ai_updates(self):
@@ -165,6 +189,7 @@ class Game:
             self.game_over = True
             self.character.position = (
                 self.screen.get_width()//2-self.character.next_sprite.get_width()//2, self.screen.get_height()//2-100)
+
         pygame.display.flip()
 
     def onblock_for_character(self, character):
@@ -189,8 +214,20 @@ class Game:
 
         self.health_bar.draw(self.screen)
 
+        WindowStack.add_window(self.character.crafting_hud.box)
+        WindowStack.add_window(self.random_box)
+
+        for dialog in WindowStack.stack:
+            if dialog.opened:
+                self.screen.blit(dialog.Surface, dialog.position)
+
+        self.character.crafting_hud.box.opened = self.craftHud_toggle
         if self.craftHud_toggle:
+
             self.character.crafting_hud.draw(self.screen)
+
+        # if self.random_box_visible:
+        #     self.screen.blit(self.random_box(), self.random_box.position)
 
         # [self.screen.blit(box(), (0, 0)) for box in self.boxes]
 
