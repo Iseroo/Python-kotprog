@@ -23,12 +23,10 @@ class Block:
         return (self.coords[0] // Block.size, self.coords[1] // Block.size)
 
     def reset_block_image(self):
-        if self.type != MAPCOLOR.WATER:
-            self.image.fill(MAPCOLOR.GRASS.rgb(MAPCOLOR.GRASS.value))
-            self.image.blit(get_map_sprite_image(
-                pygame.image.load('assets/images/grass.png').convert_alpha(), (random.randint(0, 4), random.randint(0, 4))), (4, 4))
-        else:
-            self.image.fill(MAPCOLOR.WATER.rgb(MAPCOLOR.WATER.value))
+
+        self.image.fill(MAPCOLOR.GRASS.rgb(MAPCOLOR.GRASS.value))
+        self.image.blit(get_map_sprite_image(
+            pygame.image.load('assets/images/grass.png').convert_alpha(), (random.randint(0, 4), random.randint(0, 4))), (4, 4))
 
     def add_item(self, item: Item) -> None:
         self.items.append(item)
@@ -55,12 +53,14 @@ class Block:
         self.set_item_image()
         screen.blit(self.image, self.coords)
 
-    def mouse_on_block(self):
+    def mouse_on_block(self, camera_pos):
         if len(self.items) == 0:
             return False
         mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = (mouse_pos[0] + abs(camera_pos[0]),
+                     mouse_pos[1] + abs(camera_pos[1]))
         if self.coords[0] <= mouse_pos[0] <= self.coords[0] + Block.size and self.coords[1] <= mouse_pos[1] <= self.coords[1] + Block.size:
-            print(self.items[0].type)
+            # print(self.items[0].type)
             return True
         return False
 
@@ -84,9 +84,13 @@ class GameMap:
         for block in self.blocks:
             block.draw(screen)
 
-    def on_block_check(self, coords, screen=None) -> Block:
-        for block in self.blocks:
-            block.mouse_on_block()
+    def on_block_check(self, coords, screen=None, camera_pos=(0, 0)) -> Block:
+        index_x, remainging_x = coords[0] // Block.size, coords[0] % Block.size
+        index_y, remainging_y = coords[1] // Block.size, coords[1] % Block.size
+        block = self.blocks[int(index_x*100+index_y)]
+
+        if block:
+            block.mouse_on_block(camera_pos)
             item = block.on_block_check(coords, screen=screen)
             if item is not None:
                 # print("on block")

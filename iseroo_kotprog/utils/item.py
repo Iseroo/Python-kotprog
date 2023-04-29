@@ -11,7 +11,6 @@ class MAPCOLOR(Enum):
     colorcode of the items on the map
     """
     GRASS = '#32C832'
-    WATER = "#3264C8"
     WOOD = "#C86432"
     STONE = "#C8C8C8"
     STICK = "#F0B478"
@@ -76,6 +75,9 @@ class Item:
     def __str__(self) -> str:
         return self.type.name + " " + str(self.count)
 
+    def use(self, *args):
+        pass
+
 
 class Food(Item):
     def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1, hunger: int = 0, health: int = 0) -> None:
@@ -98,30 +100,47 @@ class Weapon(Item):
         super().__init__(item_image, item_type, stack_size)
         self.damage = damage
         self.durability = durability
+        self.max_durability = durability
 
     def use(self, character):
-        MessageService.add({"text": "You used the " + self.type.name.lower() +
-                           ".", "severity": "info", "duration": 100})
         self.durability -= 1
-        character.hp -= self.damage
+        character.do_damage(self.damage)
+        self.item_image.blit(self.make_durability_bar(),
+                             (0, self.item_image.get_height() - 2))
+
+    def make_durability_bar(self):
+        # make a 2px wide bar
+        # the 100% is the item_image_size
+
+        durability_bar = pygame.Surface((self.item_image.get_width(), 2))
+        durability_bar.fill((90, 0, 0))
+        durability_bar.fill(
+            (255, 0, 0), (0, 0, self.item_image.get_width() * self.durability / 100, 2))
+        return durability_bar
 
 
 class Material(Item):
     def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1) -> None:
         super().__init__(item_image, item_type, stack_size)
 
-    def use(self):
-        MessageService.add({"text": "You used the " + self.type.name.lower() +
-                           ".", "severity": "info", "duration": 100})
-        self.count -= 1
-
 
 class Tool(Item):
     def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1, durability: int = 0) -> None:
         super().__init__(item_image, item_type, stack_size)
         self.durability = durability
+        self.max_durability = durability
 
     def use(self):
-        MessageService.add({"text": "You used the " + self.type.name.lower() +
-                           ".", "severity": "info", "duration": 100})
         self.durability -= 1
+        self.item_image.blit(self.make_durability_bar(),
+                             (0, self.item_image.get_height() - 2))
+
+    def make_durability_bar(self):
+        # make a 2px wide bar
+        # the 100% is the item_image_size
+
+        durability_bar = pygame.Surface((self.item_image.get_width(), 2))
+        durability_bar.fill((90, 0, 0))
+        durability_bar.fill(
+            (255, 0, 0), (0, 0, self.item_image.get_width() * (self.durability / self.max_durability), 2))
+        return durability_bar

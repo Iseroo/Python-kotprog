@@ -1,3 +1,4 @@
 Pillow==9.5.0
 pygame==2.1.2
 webcolors==1.12
+ordered_set==4.1.0

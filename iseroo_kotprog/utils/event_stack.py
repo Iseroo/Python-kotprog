@@ -1,4 +1,5 @@
-from typing import List
+
+from ordered_set import OrderedSet
 
 
 class Event:
@@ -16,11 +17,11 @@ class Event:
 
 class EventStack:
 
-    stack: List[Event] = []
+    stack = OrderedSet()
 
     def push(event):
 
-        EventStack.stack.append(event)
+        EventStack.stack.add(event)
 
     def pop():
 
@@ -29,8 +30,8 @@ class EventStack:
     def remove(event):
         # print(event, event in EventStack.stack)
         try:
-            EventStack.stack.remove(event)
-            print("removed")
+            EventStack.stack.discard(event)
+            # print("removed")
         except:
             print("Not in")
 
@@ -45,6 +46,16 @@ class EventStack:
             if event.type == event_type:
 
                 return event
+
+        return None
+
+    def find_event(event):
+
+        for e in EventStack.stack:
+
+            if e == event:
+
+                return e
 
         return None
 
@@ -73,8 +84,8 @@ class EventStack:
 
         if event is not None:
 
-            event()
             EventStack.remove(event)
+            event()
 
 
 class WindowStack:

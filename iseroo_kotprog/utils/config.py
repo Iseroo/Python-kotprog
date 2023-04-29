@@ -6,6 +6,9 @@ class Config:
     images = None
 
     screen = None
+    map_layer = None
+    game_map = None
+    all_characters = []
 
     cursor_style = None
 

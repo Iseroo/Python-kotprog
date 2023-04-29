@@ -16,7 +16,7 @@ class HealthBar:
 
         self.hp_text = TextDisplay("HP", 12, (255, 255, 255)).draw()
 
-        self.hunger_text = TextDisplay("Éhség", 12, (255, 255, 255)).draw()
+        self.hunger_text = TextDisplay("Hunger", 12, (255, 255, 255)).draw()
 
         self.make_bar_surfaces()
 

@@ -2,6 +2,7 @@
 
 import random
 import pygame
+from utils.item import Weapon, Tool, Food, Material
 from utils.event_stack import Event, EventStack, WindowStack
 from utils.box import Box
 from utils.config import Config
@@ -65,6 +66,7 @@ class Inventory:
             self.slots[slot].use()
             if self.slots[slot].count <= 0:
                 self.slots[slot] = None
+           
             return True
         return False
 
@@ -118,8 +120,11 @@ class CraftingHUD:
     def __init__(self, player) -> None:
         self.inventory_offset = 12
         self.inventory_offsetx = 8
+        self.opened = False
 
-        self.box = Box((500, 300))
+        self.box = Box((500, 300), parent=self)
+        self.box.position = (Config.screen.get_width() // 2 - self.box.Surface.get_width() // 2,
+                             Config.screen.get_height() // 2 - self.box.Surface.get_height() // 2)
 
         self.player = player
         self.inventory = player.inventory
@@ -141,7 +146,6 @@ class CraftingHUD:
             x: load_item_image(x) for x in self.craftable_items}
         self.ingredients = {x: [(y, Config.data["craft_items"][x][y]) for y in Config.data["craft_items"][x]]
                             for x in self.craftable_items}
-        print(self.ingredients)
 
         self.craftable_items_hud = self.inv_bar.copy()
 
@@ -151,8 +155,6 @@ class CraftingHUD:
         self.to_craft = None
 
         self.callback = None
-        
-        self.opened = False
 
         self.update()
         self.update_craftable_items()
@@ -163,6 +165,11 @@ class CraftingHUD:
     def empty_slots(self):
         self.slots = {x: self.slot_img.copy() for x in range(9)}
         self.result = self.slot_img.copy()
+
+    def toggle(self):
+        self.box.opened = not self.box.opened
+        self.update_craftable_items()
+        self.update()
 
     def draw(self, screen: pygame.Surface):
         self.box.position = (screen.get_width() // 2 - self.box.size[0] // 2,
@@ -191,8 +198,11 @@ class CraftingHUD:
         self.hud_surface.blit(
 
             self.arrow, (int(self.slot_img.get_width() * 3.1), self.slot_img.get_height()))
-    
-        self.box.reset_and_add(self.hud_surface, (0,0))
+
+        self.box.reset_and_add(self.hud_surface, (self.box.size[0] // 2 - self.hud_surface.get_width() // 2,
+                                                  self.box.size[1] // 2 - self.hud_surface.get_height() // 2))
+        self.box.add_element(self.craftable_items_hud, (self.box.size[0] // 2 - self.craftable_items_hud.get_width() // 2,
+                                                        self.box.size[1] // 2 - self.craftable_items_hud.get_height() // 2 - 100))
 
     def update_craftable_items(self):
         self.craftable_items_hud = self.inv_bar.copy()
@@ -202,8 +212,8 @@ class CraftingHUD:
 
     def mouse_on_item(self, mouse_pos, screen):
         # set mouse_pos (0,0) as the craftable_items_hud position (0,0)
-        mouse_pos = (mouse_pos[0] - (screen.get_width() // 2 - self.craftable_items_hud.get_width() // 2),
-                     mouse_pos[1] - (screen.get_height()//2 - self.craftable_items_hud.get_height()//2 - 100))
+        mouse_pos = (mouse_pos[0] - (screen.get_width() // 2 - self.box.Surface.get_width() // 2 + (self.box.size[0] // 2 - self.craftable_items_hud.get_width() // 2)),
+                     mouse_pos[1] - (screen.get_height()//2 - self.box.Surface.get_height()//2 + (self.box.size[1] // 2 - self.craftable_items_hud.get_height() // 2 - 100)))
         for item in self.craftable_items:
             self.update_craftable_items()
             item_coords = (self.inventory_offset + 4 + (
@@ -211,12 +221,13 @@ class CraftingHUD:
             if mouse_pos[0] >= item_coords[0] and mouse_pos[0] <= item_coords[0] + self.craftable_items_img[item].get_width() and mouse_pos[1] >= item_coords[1] and mouse_pos[1] <= item_coords[1] + self.craftable_items_img[item].get_height():
                 self.craftable_items_hud.blit(self.selected_slot_img, (self.inventory_offset + (
                     (self.craftable_items_img[item].get_width() - 2 + self.inventory_offsetx) * ([*self.craftable_items.keys()].index(item))), self.inventory_offset))
+                Config.set_cursor_style(pygame.SYSTEM_CURSOR_HAND)
 
+                self.update()
                 if pygame.mouse.get_pressed()[0]:
                     self.empty_slots()
                     self.to_craft = None
 
-                    self.update()
                     self.set_crafint_table(item)
                 return
         self.update_craftable_items()
@@ -259,8 +270,26 @@ class CraftingHUD:
                         # for item_index in self.inventory.slots:
                         self.inventory.subtract_item(
                             ingredient[0], ingredient[1])
-                    self.inventory.add_item_to_stack(Item(
-                        self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft]))
+                    item_type = Config.data['item_types'][self.to_craft]
+
+                    match item_type:
+                        case 'Weapon':
+                            try:
+                                damage = Config.data["damage"][self.to_craft]
+                            except KeyError:
+                                damage = 3
+                            self.inventory.add_item_to_stack(Weapon(
+                                self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft], damage=damage, durability=Config.data["durabilities"][self.to_craft]))
+
+                        case 'Tool':
+                            self.inventory.add_item_to_stack(Tool(
+                                self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft], Config.data["durabilities"][self.to_craft]))
+                        case 'Food':
+                            self.inventory.add_item_to_stack(Food(
+                                self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft], Config.data["food_health_bonus"][self.to_craft][0], Config.data["food_health_bonus"][self.to_craft][1]))
+                        case 'Material':
+                            self.inventory.add_item_to_stack(Material(
+                                self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft]))
                     # if self.inventory.slots[item_index] and self.inventory.slots[item_index].type == ingredient[0]:
                     #     self.inventory.slots[item_index].count -= ingredient[1]
 
@@ -273,8 +302,10 @@ class CraftingHUD:
 
     @property
     def Surface(self):
-        
+        self.update_craftable_items()
         self.mouse_on_item(pygame.mouse.get_pos(), Config.screen)
         self.craft(Config.screen)
-        
+
+        self.box()
+
         return self.box

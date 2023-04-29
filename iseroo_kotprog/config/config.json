@@ -24,14 +24,16 @@
         "walk": { "row": 6, "count": 8 },
         "idle": { "row": 2, "count": 8 },
         "died": { "row": 28, "count": 4 },
-        "doing": { "row": 15, "count": 4 }
+        "doing": { "row": 15, "count": 4 },
+        "attack": { "row": 32, "count": 4 }
     },
 
     "enemy_cat_sprite_indexes": {
         "walk": { "row": 4, "count": 8 },
         "idle": { "row": 0, "count": 8 },
         "died": { "row": 36, "count": 4 },
-        "doing": { "row": 10, "count": 4 }
+        "doing": { "row": 10, "count": 4 },
+        "attack": { "row": 38, "count": 4 }
     },
 
     "animation_delay": 10,
@@ -48,17 +50,7 @@
 
     "scale_multiplier": 1.0,
 
-    "pickup_ticks": {
-        "STONE": 5,
-        "WOOD": 4,
-        "STICK": 2,
-        "CARROT": 1,
-        "BERRY": 1,
-        "APPLE": 1,
-        "MUSHROOM": 1
-    },
-
-    "hunger_per_tick": -10,
+    "hunger_per_tick": -2,
     "health_if_hungry": -0,
 
     "food_health_bonus": {
@@ -66,6 +58,37 @@
         "BERRY": [10, 1],
         "APPLE": [10, 20],
         "MUSHROOM": [50, -10]
+    },
+
+    "item_types": {
+        "WOOD": "Material",
+        "STONE": "Material",
+        "STICK": "Material",
+        "CARROT": "Food",
+        "BERRY": "Food",
+        "APPLE": "Food",
+        "MUSHROOM": "Food",
+        "WOOD_SWORD": "Weapon",
+        "STONE_SWORD": "Weapon",
+        "AXE": "Tool",
+        "PICKAXE": "Tool",
+        "FIREPIT": "Tool",
+        "TORCH": "Weapon"
+    },
+
+    "durabilities": {
+        "AXE": 20,
+        "PICKAXE": 15,
+        "FIREPIT": 20,
+        "TORCH": 20,
+        "WOOD_SWORD": 10,
+        "STONE_SWORD": 25
+    },
+    "damage": {
+        "WOOD_SWORD": 5,
+        "STONE_SWORD": 15,
+        "TORCH": 10,
+        "FIST": 1
     },
 
     "craft_items": {
@@ -97,5 +120,15 @@
         "APPLE": {
             "STICK": 1
         }
+    },
+
+    "item_pickup_time": {
+        "WOOD": 48,
+        "STONE": 80,
+        "STICK": 24
+    },
+    "necessary_items_for_pickup": {
+        "WOOD": "AXE",
+        "STONE": "PICKAXE"
     }
 }

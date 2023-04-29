@@ -1,4 +1,5 @@
 from typing import *
+from utils.item import Weapon, Tool
 from utils.inventory import InventoryHUD, CraftingHUD
 from utils.message_service import MessageService
 from utils.functions import get_item_sprite_image, scale_sprites
@@ -16,7 +17,8 @@ class Character:
             'walk': [],
             'died': [],
             'idle': [],
-            'doing': []
+            'doing': [],
+            "attack": []
 
         }
 
@@ -48,6 +50,11 @@ class Character:
 
         self.doing_generator = self.generate_doing()
         self.doingThing = False
+        self.done = True
+        self.doingTime = 100
+
+        self.do_attack = False
+        self.attack_generator = self.generate_attack()
 
         self.delay = Config.data["animation_delay"]
         self.current_time = 0
@@ -98,6 +105,10 @@ class Character:
         self.sprites['doing'] = scale_sprites(get_item_sprite_image(
             img, doing['row'], doing['count']), 1.5)
 
+        attack = Config.data[cat_config]["attack"]
+        self.sprites['attack'] = scale_sprites(get_item_sprite_image(
+            img, attack['row'], attack['count']), 1.5)
+
     def add_item_to_inventory(self, item):
         for slot in self.inventory:
             if self.inventory[slot] is None:
@@ -145,6 +156,61 @@ class Character:
         for sprite in self.sprites["died"]:
             yield sprite
 
+    def attack(self, screen):
+        if self.next_sprite is None:
+            self.next_sprite = next(self.attack_generator)
+
+        if self.current_time < self.died_speed:
+            self.current_time += 1
+            screen.blit(self.next_sprite, self.position)
+            return
+        try:
+            self.next_sprite = next(self.attack_generator)
+
+        except StopIteration:
+            self.attack_generator = self.generate_attack()
+            self.next_sprite = next(self.attack_generator)
+            self.do_attack = False
+
+        screen.blit(self.next_sprite, self.position)
+        self.current_time = 0
+
+    def generate_attack(self):
+        for sprite in self.sprites["attack"]:
+            yield sprite
+
+    def use_weapon_to_attack(self):
+        selected_item = self.inventory.slots[self.inventory_hud.selected_slot]
+        if not self.onblock:
+            return
+
+        coords = self.onblock.indexes
+        to_be_checked = [(coords[0]-1, coords[1]-1), (coords[0]-1, coords[1]), (coords[0]-1, coords[1]+1), (coords[0], coords[1]-1),
+                         (coords[0], coords[1]+1), (coords[0]+1, coords[1]-1), (coords[0]+1, coords[1]), (coords[0]+1, coords[1]+1), coords]
+        characters_to_be_damaged = []
+        for character in Config.all_characters:
+            # print(character.get_index_coords)
+            if character.get_index_coords() in to_be_checked:
+                characters_to_be_damaged.append(character)
+        print(isinstance(selected_item, Weapon), characters_to_be_damaged)
+        if isinstance(selected_item, Weapon):
+            for character in characters_to_be_damaged:
+                print("self: ", self != character)
+                if character != self:
+                    selected_item.use(character)
+
+        else:
+            for character in characters_to_be_damaged:
+                if character != self:
+                    character.hp -= Config.data["damage"]['FIST']
+
+    def do_damage(self, damage):
+        self.hp -= damage if damage < self.hp else self.hp
+        print(self.hp)
+
+    def get_index_coords(self):
+        return self.onblock.indexes
+
     def generate_idle(self):
         for sprite in self.sprites["idle"]:
             yield sprite
@@ -171,7 +237,7 @@ class Character:
         for sprite in self.sprites["doing"]:
             yield sprite
 
-    def doing(self, screen):
+    def doing(self, screen: pygame.Surface):
         if self.next_sprite is None:
             self.next_sprite = next(self.doing_generator)
 
@@ -197,7 +263,7 @@ class Character:
         bar.fill((255, 255, 255))
         return bar
 
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface):
         if self.onblock and len(self.onblock.items) > 0 and self.player:
             MessageService.add(
                 {"text": "Press F to pickup", "severity": "info", "duration": 1})
@@ -211,24 +277,37 @@ class Character:
 
         if self.wait_for_idle >= 5:
             self.wait_for_idle = 100
-            if self.doingThing:
+
+            if self.doingThing and self.doingTime > 0:
+                if self.done == False:
+                    self.done = True
                 self.doing(screen=screen)
 
                 screen.blit(self.doing_bar(),
                             (self.position[0], self.position[1] + self.next_sprite.get_height()+10))
+                self.doingTime -= 1
+
+            elif self.do_attack:
+                self.attack(screen)
+
             else:
                 self.idle(screen)
+
         else:
             self.check_wall_boundries(screen)
             screen.blit(self.next_sprite, self.position)
 
+        self.pickup_time()
+
     def move(self, direction):
         if self.hp <= 0:
+            return
+        if self.doingThing:
             return
 
         self.wait_for_idle = 0
         self.walk(direction)
-        speed_modifier = 1
+        speed_modifier = 4
         if self.hp < 50 and self.hp >= 30:
             speed_modifier = 0.9
         elif self.hp < 30 and self.hp >= 10:
@@ -277,23 +356,60 @@ class Character:
         self.onblock = block
 
     def pickup(self, map_layer):
-        if self.onblock:
-            if self.inventory.isFull:
-
-                MessageService.add(
-                    {'text': "Inventory is full", "severity": "warning"})
+        if self.onblock and len(self.onblock.items) > 0:
+            if not self.check_necessary_item_for_pickup(self.onblock.items[-1].type):
+                if self.player:
+                    MessageService.add(
+                        {'text': "Don't have necessary equipment!", "severity": "warning"})
                 return False
-            picked_up = self.onblock.remove_item_from_top()
-            if picked_up:
-                self.inventory.add_item_to_stack(picked_up)
-                self.onblock.draw(map_layer)
-                self.inventory_hud.update_slots()
-                return True
+            if self.inventory.isFull:
+                if self.player:
+                    MessageService.add(
+                        {'text': "Inventory is full", "severity": "warning"})
+                return False
+            self.doingThing = True
+            try:
+                self.doingTime = Config.data["item_pickup_time"][self.onblock.items[0].type]
+            except:
+                self.doingTime = 1
+
         return False
+
+    def check_necessary_item_for_pickup(self, pickup):
+
+        if pickup in Config.data["necessary_items_for_pickup"]:
+            necessary = Config.data["necessary_items_for_pickup"][pickup]
+            for (key, item) in self.inventory.slots.items():
+                if item and item.type == necessary:
+                    item.use()
+                    if isinstance(item, Weapon) or isinstance(item, Tool) and item.durability <= 0:
+                        self.inventory.slots[key] = None
+                    print("used")
+                    return True
+            return False
+        return True
 
     def use_slot(self):
         if self.inventory.slots[self.inventory_hud.selected_slot]:
             self.inventory.slots[self.inventory_hud.selected_slot].use(self)
+
+    def pickup_time(self):
+        # print("asd")
+        if not self.done:
+            return
+        elif self.done and self.doingTime <= 0:
+            # print("done")
+            picked_up = self.onblock.remove_item_from_top()
+            if picked_up:
+                self.inventory.add_item_to_stack(picked_up)
+                self.onblock.draw(Config.map_layer)
+                self.inventory_hud.update_slots()
+            self.done = False
+            self.doingThing = False
+            self.doingTime = 0
+            self.doing_percentage = 0
+
+            # return True
 
 
 class Enemy(Character):
@@ -321,3 +437,11 @@ class Enemy(Character):
             self.move('down')
         if self.position[1] > pos[1]:
             self.move('up')
+
+    def draw(self, screen):
+        super().draw(screen)
+        # draw hp bar under
+        pygame.draw.rect(self.next_sprite, (90, 0, 0), (0, self.next_sprite.get_height(
+        )-2, self.next_sprite.get_width(), 2))
+        pygame.draw.rect(self.next_sprite, (255, 0, 0), (0, self.next_sprite.get_height(
+        )-2, self.next_sprite.get_width()*(self.hp/100), 2))
