@@ -60,7 +60,6 @@ class Box:
         self.Surface.blit(element, pos)
 
     def add_border(self):
-        # draw border left, right, bottom is 2px wide and rgb(51,32,24), top is 2px wide and rbg(76,48,36). innerborder 4px wide, and rbg(153,69,63)
         pygame.draw.rect(self.Surface, (51, 32, 24),
                          (0, 0, self.size[0], self.size[1]), 2, 2, 2, 2)
         pygame.draw.rect(self.Surface, (76, 48, 36),
@@ -84,12 +83,10 @@ class Box:
         self.close_callback = event
 
     def close(self):
-        print(self._close_callback)
         self._opened = False
         if self._close_callback:
             self._close_callback()
 
-        # print("close")
         if self.parent:
             self.parent.opened = False
         EventStack.remove(self.event_mouse_on)
@@ -109,9 +106,6 @@ class Box:
                 EventStack.push(self.event_mouse_on)
         if not EventStack.find_event(self.event_close):
             EventStack.push(self.event_close)
-            # print("pushed")
-
-        # print("called")
 
         if position:
             self.position = position

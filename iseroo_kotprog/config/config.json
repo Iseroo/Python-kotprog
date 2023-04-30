@@ -11,7 +11,6 @@
         "STONE_SWORD": 1,
         "AXE": 1,
         "PICKAXE": 1,
-        "FIREPIT": 1,
         "TORCH": 1
     },
 
@@ -50,8 +49,8 @@
 
     "scale_multiplier": 1.0,
 
-    "hunger_per_tick": -2,
-    "health_if_hungry": -0,
+    "hunger_per_tick": -10,
+    "health_if_hungry": -1,
 
     "food_health_bonus": {
         "CARROT": [12, 1],
@@ -72,16 +71,14 @@
         "STONE_SWORD": "Weapon",
         "AXE": "Tool",
         "PICKAXE": "Tool",
-        "FIREPIT": "Tool",
         "TORCH": "Weapon"
     },
 
     "durabilities": {
         "AXE": 20,
         "PICKAXE": 15,
-        "FIREPIT": 20,
         "TORCH": 20,
-        "WOOD_SWORD": 10,
+        "WOOD_SWORD": 3,
         "STONE_SWORD": 25
     },
     "damage": {
@@ -107,11 +104,6 @@
         "PICKAXE": {
             "WOOD": 2,
             "STICK": 3
-        },
-        "FIREPIT": {
-            "WOOD": 2,
-            "STICK": 2,
-            "STONE": 4
         },
         "TORCH": {
             "WOOD": 1,

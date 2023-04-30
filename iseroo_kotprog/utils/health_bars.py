@@ -45,9 +45,6 @@ class HealthBar:
         self.hunger = hunger
 
     def make_bar_surfaces(self):
-        # make hp surface with the right color, and a lighter one for the background
-        # and make hunger surface with the right color, and a lighter one for the background
-
         self.hp_surface.fill((100, 0, 0))
         hp_rect = pygame.Rect(
             (0, 0), (self.bar_widht * self.hp / 100, self.bar_height))

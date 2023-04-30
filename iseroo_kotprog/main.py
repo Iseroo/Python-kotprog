@@ -62,13 +62,11 @@ class Game:
         self.character = Character()
         Config.all_characters.append(self.character)
 
-        self.enemies = [Enemy() for _ in range(10)]
+        self.enemies = [Enemy() for _ in range(0)]
         Config.all_characters.extend(self.enemies)
         for x in self.enemies:
             x.position = self.game_map.get_block_by_indexes(
-                (random.randint(0, 99), random.randint(0, 99))).coords
-        # self.enemies[0].position = self.game_map.get_block_by_indexes(
-        #     (10, 10)).coords
+                (random.randint(0, 20), random.randint(0, 20))).coords
 
         self.health_bar = HealthBar(
             (self.screen.get_width() // 2, self.screen.get_height()-80))
@@ -79,7 +77,10 @@ class Game:
         self.onblock = None
 
         self.game_over = False
+
         self.game_over_text = TextDisplay("Game Over", 24, (255, 0, 0))
+        self.win_text = TextDisplay(
+            "Winner winner cat dinner!", 24, (0, 255, 0))
         self.game_over_dialog = Box(
             (self.screen.get_width(), self.screen.get_height()), close_callback=self.close)
         self.game_over_dialog.add_element(self.game_over_text.Surface, (self.game_over_dialog.Surface.get_width(
@@ -93,13 +94,21 @@ class Game:
                                  self.screen.get_height()-200)
         self.minimap.opened = True
 
+    def determine_end(self):
+        if self.character.hp <= 0:
+            self.game_over = True
+
+        if len([x for x in Config.all_characters if x.hp > 0]) == 1 and self.character.hp > 0:
+            self.game_over = True
+            self.game_over_dialog.reset_and_add(self.win_text.Surface, (self.game_over_dialog.Surface.get_width(
+            )//2-self.win_text.Surface.get_width()//2, self.game_over_dialog.Surface.get_height()//2-self.win_text.Surface.get_height()//2))
+
     def close(self):
         self.running = False
         pygame.quit()
         sys.exit()
 
     def run(self):
-
         while self.running:
 
             Config.cursor_style = None
@@ -110,8 +119,6 @@ class Game:
             self.draw()
 
             self.handle_events()
-            # print(self.game_map.get_block_by_coords(
-            # pygame.mouse.get_pos()).indexes)
             self.enemy_ai_updates()
             if Config.cursor_style:
                 pygame.mouse.set_cursor(Config.cursor_style)
@@ -146,10 +153,8 @@ class Game:
 
                 if event.key == K_m:
                     self.minimap.opened = not self.minimap.opened
-
                 if event.key == K_e:
                     self.character.crafting_hud.toggle()
-                    # self.toggle_craft_hud()
                 if event.key == K_h:
                     [print(x.type) for x in EventStack.stack]
                 if event.key == K_SPACE:
@@ -170,7 +175,6 @@ class Game:
         if self.character.onblock:
 
             self.character.onblock.indexes
-            # draw rect on minimap_img
             copy = self.minimap_img.copy()
             pygame.draw.rect(copy, (0, 0, 255),
                              (*self.character.onblock.indexes, 2, 2))
@@ -183,15 +187,12 @@ class Game:
             self.minimap.Surface.blit(copy, (25, 25))
 
     def enemy_ai_updates(self):
-        # for enemy in self.enemies:
-        #     enemy.auto_move_to_pos(self.character.position)
 
         for enemy in self.enemies:
             enemy.ai(self.map_layer)
 
     def update(self):
         self.character.set_onblock(self.onblock_for_character(self.character))
-        # self.enemy.set_onblock(self.onblock_for_character(self.enemy))
         for enemy in self.enemies:
             enemy.set_onblock(self.onblock_for_character(enemy))
 
@@ -211,6 +212,7 @@ class Game:
         return self.game_map.on_block_check(character.get_position(), self.map_layer, camera_pos=self.camera_pos)
 
     def draw(self):
+        self.determine_end()
         if self.game_over:
             self.screen.blit(self.game_over_dialog.Surface, (0, 0))
             self.character.draw(self.screen)
@@ -218,9 +220,7 @@ class Game:
         self.screen.fill(MAPCOLOR.GRASS.rgb(MAPCOLOR.GRASS.value))
         self.screen_layer.blit(self.map_layer, (0, 0))
         self.character.draw(self.screen_layer)
-        # self.enemy.draw(self.screen_layer)
         for enemy in self.enemies:
-            # print(self.screen_layer)
             enemy.draw(self.screen_layer)
         self.player_info_text_display.draw(self.screen_layer)
         self.screen.blit(self.screen_layer, self.camera_pos)
@@ -238,15 +238,13 @@ class Game:
 
             self.screen.blit(self.character.crafting_hud.Surface(),
                              self.character.crafting_hud.Surface.position)
-
-        # if self.random_box_visible:
-        #     self.screen.blit(self.random_box(), self.random_box.position)
-
-        # [self.screen.blit(box(), (0, 0)) for box in self.boxes]
+        remaining_player_text = TextDisplay(
+            f"{len([x for x in Config.all_characters if x.hp > 0])} player left.", 12, (255, 255, 255))
+        self.screen.blit(remaining_player_text.Surface, (0, 0))
 
     def message_service_subscribe(self):
         message = MessageService.next()
-        if message:  # TODO: do something
+        if message:
             color = (249, 113, 50) if message["severity"] == "warning" else (
                 255, 0, 0) if message["severity"] == "error" else (255, 255, 255)
             text = TextDisplay(
@@ -276,17 +274,22 @@ class Game:
 
                 if mapcolor != MAPCOLOR.GRASS:
                     if mapcolor == MAPCOLOR.CARROT:
-                        block.add_item(Food(get_map_sprite_image(
-                            sprite_sheet, ITEM[mapcolor.name].value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name], Config.data["food_health_bonus"]["CARROT"][0], Config.data["food_health_bonus"]["CARROT"][1]))
+                        item = Food(get_map_sprite_image(
+                            sprite_sheet, ITEM[mapcolor.name].value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name],
+                            Config.data["food_health_bonus"]["CARROT"][0], Config.data["food_health_bonus"]["CARROT"][1])
+                        block.add_item(item)
 
                     elif mapcolor == MAPCOLOR.BERRY:
                         block_type = random.choice(
                             [ITEM["APPLE"], ITEM["BERRY"], ITEM["MUSHROOM"], ITEM["BERRY"]])
-                        block.add_item(Food(get_map_sprite_image(
-                            sprite_sheet, block_type.value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name], Config.data["food_health_bonus"][block_type.name][0], Config.data["food_health_bonus"][block_type.name][1]))
+                        item = Food(get_map_sprite_image(
+                            sprite_sheet, block_type.value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name],
+                            Config.data["food_health_bonus"][block_type.name][0], Config.data["food_health_bonus"][block_type.name][1])
+                        block.add_item(item)
                     else:
-                        block.add_item(Material(get_map_sprite_image(
-                            sprite_sheet, ITEM[mapcolor.name].value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name]))
+                        item = Material(get_map_sprite_image(
+                            sprite_sheet, ITEM[mapcolor.name].value), mapcolor.name, Config.data["items_stack_size"][mapcolor.name])
+                        block.add_item(item)
 
     def move_camera(self, keys=None, speed=1):
         keys = pygame.key.get_pressed() if keys == None else keys
@@ -323,7 +326,7 @@ class Game:
             self.camera_pos = (self.camera_pos[0], -self.camera.get_height() +
                                Config.data["screen_size"]["height"] - Config.data["camera_offset"]["y"])
 
-    def move_character(self):  # move with wasd
+    def move_character(self):
 
         keys = pygame.key.get_pressed()
 

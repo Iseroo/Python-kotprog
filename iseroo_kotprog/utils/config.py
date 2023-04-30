@@ -10,6 +10,14 @@ class Config:
     game_map = None
     all_characters = []
 
+    items = {
+        "FOOD": [],
+        "WOOD": [],
+        "STICK": [],
+        "STONE": [],
+
+    }
+
     cursor_style = None
 
     def set_cursor_style(style):
@@ -24,3 +32,7 @@ class Config:
     def load_image_locations(path: str):
         with open(path, 'r') as f:
             Config.images = json.load(f)
+
+    def remove_from_items(type, item):
+
+        Config.items[type].pop(Config.items[type].index(item))

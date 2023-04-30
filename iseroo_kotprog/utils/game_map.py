@@ -4,6 +4,7 @@ import pygame
 import random
 from utils.map_reader import get_map_sprite_image
 from utils.message_service import MessageService
+from utils.config import Config
 
 
 class Block:
@@ -31,6 +32,15 @@ class Block:
     def add_item(self, item: Item) -> None:
         self.items.append(item)
 
+        item_type = ""
+        match item.type:
+            case "BERRY" | "MUSHROOM" | "APPLE" | "CARROT":
+                item_type = "FOOD"
+            case _:
+                item_type = item.type
+
+        Config.items[item_type].append(self)
+
         self.set_item_image()
 
     def remove_item(self, item: Item) -> None:
@@ -41,6 +51,15 @@ class Block:
         if len(self.items) > 0:
             removed_item = self.items.pop()
             self.set_item_image()
+
+            item_type = ""
+            match removed_item.type:
+                case "BERRY" | "MUSHROOM" | "APPLE" | "CARROT":
+                    item_type = "FOOD"
+                case _:
+                    item_type = removed_item.type
+
+            Config.remove_from_items(item_type, self)
             return removed_item
 
     def set_item_image(self):
@@ -60,7 +79,6 @@ class Block:
         mouse_pos = (mouse_pos[0] + abs(camera_pos[0]),
                      mouse_pos[1] + abs(camera_pos[1]))
         if self.coords[0] <= mouse_pos[0] <= self.coords[0] + Block.size and self.coords[1] <= mouse_pos[1] <= self.coords[1] + Block.size:
-            # print(self.items[0].type)
             return True
         return False
 
@@ -93,7 +111,6 @@ class GameMap:
             block.mouse_on_block(camera_pos)
             item = block.on_block_check(coords, screen=screen)
             if item is not None:
-                # print("on block")
                 return item
         return None
 

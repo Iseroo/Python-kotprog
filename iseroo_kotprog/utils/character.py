@@ -1,3 +1,4 @@
+import math
 from typing import *
 from utils.item import Weapon, Tool
 from utils.inventory import InventoryHUD, CraftingHUD
@@ -40,7 +41,7 @@ class Character:
         self.load_sprite()
         self.idle_generator = self.generate_idle()
         self.next_sprite = None
-        self.wait_for_idle = 100  # max 100
+        self.wait_for_idle = 100
 
         self.walk_generator = self.generate_walk()
         self.walk_speed = 5
@@ -78,7 +79,7 @@ class Character:
             self.tick_count = 0
             self.hunger += Config.data["hunger_per_tick"] if self.hunger > 0 else 0
             if self.hunger <= 0:
-                if self.hp > 0:
+                if self.hp > 10:
                     self.hp += Config.data["health_if_hungry"]
 
     def add_event_to_craft_hud(self, event):
@@ -189,16 +190,15 @@ class Character:
                          (coords[0], coords[1]+1), (coords[0]+1, coords[1]-1), (coords[0]+1, coords[1]), (coords[0]+1, coords[1]+1), coords]
         characters_to_be_damaged = []
         for character in Config.all_characters:
-            # print(character.get_index_coords)
             if character.get_index_coords() in to_be_checked:
                 characters_to_be_damaged.append(character)
-        print(isinstance(selected_item, Weapon), characters_to_be_damaged)
         if isinstance(selected_item, Weapon):
             for character in characters_to_be_damaged:
-                print("self: ", self != character)
                 if character != self:
                     selected_item.use(character)
 
+            if selected_item.durability == 0:
+                self.inventory.slots[self.inventory_hud.selected_slot] = None
         else:
             for character in characters_to_be_damaged:
                 if character != self:
@@ -206,7 +206,6 @@ class Character:
 
     def do_damage(self, damage):
         self.hp -= damage if damage < self.hp else self.hp
-        print(self.hp)
 
     def get_index_coords(self):
         return self.onblock.indexes
@@ -382,9 +381,9 @@ class Character:
             for (key, item) in self.inventory.slots.items():
                 if item and item.type == necessary:
                     item.use()
+
                     if isinstance(item, Weapon) or isinstance(item, Tool) and item.durability <= 0:
                         self.inventory.slots[key] = None
-                    print("used")
                     return True
             return False
         return True
@@ -394,11 +393,9 @@ class Character:
             self.inventory.slots[self.inventory_hud.selected_slot].use(self)
 
     def pickup_time(self):
-        # print("asd")
         if not self.done:
             return
         elif self.done and self.doingTime <= 0:
-            # print("done")
             picked_up = self.onblock.remove_item_from_top()
             if picked_up:
                 self.inventory.add_item_to_stack(picked_up)
@@ -409,18 +406,68 @@ class Character:
             self.doingTime = 0
             self.doing_percentage = 0
 
-            # return True
-
 
 class Enemy(Character):
     def __init__(self) -> None:
         super().__init__(player=False)
         self.todo_stack = []
+        self.wait = 10
+        self.picking = False
 
     def ai(self, map_layer, other_characters=None, near_objects=None):
+        if self.hp <= 0:
+            return
+        if not self.onblock:
+            return
+        coords = self.onblock.indexes
+        to_be_checked = [coords, (coords[0]-1, coords[1]-1), (coords[0]-1, coords[1]), (coords[0]-1, coords[1]+1), (coords[0], coords[1]-1),
+                         (coords[0], coords[1]+1), (coords[0]+1, coords[1] -
+                                                    1), (coords[0]+1, coords[1]), (coords[0]+1, coords[1]+1),
+                         (coords[0]-2), (coords[1]-2), (coords[0]-2, coords[1]-1), (coords[0] -
+                                                                                    2, coords[1]), (coords[0]-2, coords[1]+1), (coords[0]-2, coords[1]+2),
+                         (coords[0]-1, coords[1]-2), (coords[0]-1, coords[1]+2), (coords[0], coords[1] -
+                                                                                  2), (coords[0], coords[1]+2), (coords[0]+1, coords[1]-2), (coords[0]+1, coords[1]+2),
+                         (coords[0]+2, coords[1]-2), (coords[0]+2, coords[1]-1), (coords[0]+2, coords[1]), (coords[0]+2, coords[1]+1), (coords[0]+2, coords[1]+2)]
+        characters_to_be_damaged = []
+        for character in Config.all_characters:
+            if character.get_index_coords() in to_be_checked:
+                characters_to_be_damaged.append(character)
 
-        if self.onblock and len(self.onblock.items):
-            self.pickup(map_layer)
+        if len(characters_to_be_damaged) > 1:
+            has_alive = [
+                character for character in characters_to_be_damaged if character.hp > 0]
+            if len(has_alive) > 0:
+                if self.wait <= 0:
+                    for character in characters_to_be_damaged:
+                        if character != self and character.hp > 0:
+                            self.auto_move_to_pos(character.position)
+                            self.do_attack = True
+                            self.use_weapon_to_attack()
+                    self.wait = 10
+                else:
+                    self.wait -= 1
+                return
+        if self.hunger < 30:
+            closest_food = None
+            closest_distance = 100000
+            for food in Config.items['FOOD']:
+                if food.type == "MUSHROOM":
+                    return
+                food_distance = math.sqrt(
+                    (food.coords[0]-self.position[0])**2 + (food.coords[1]-self.position[1])**2)
+                if food_distance < closest_distance:
+                    closest_distance = food_distance
+                    closest_food = food
+            if closest_food:
+                self.auto_move_to_pos(closest_food.coords)
+                if closest_distance < 2:
+                    self.pickup(map_layer)
+
+                    self.eat()
+
+    def eat(self):
+        if self.inventory.slots[0]:
+            self.inventory.slots[0].use(self)
 
     def get_inventory(self):
         return self.inventory
@@ -440,7 +487,6 @@ class Enemy(Character):
 
     def draw(self, screen):
         super().draw(screen)
-        # draw hp bar under
         pygame.draw.rect(self.next_sprite, (90, 0, 0), (0, self.next_sprite.get_height(
         )-2, self.next_sprite.get_width(), 2))
         pygame.draw.rect(self.next_sprite, (255, 0, 0), (0, self.next_sprite.get_height(
