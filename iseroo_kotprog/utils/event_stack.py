@@ -28,10 +28,8 @@ class EventStack:
         return EventStack.stack.pop()
 
     def remove(event):
-        # print(event, event in EventStack.stack)
         try:
             EventStack.stack.discard(event)
-            # print("removed")
         except:
             print("Not in")
 

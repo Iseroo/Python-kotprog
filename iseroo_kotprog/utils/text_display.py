@@ -30,7 +30,6 @@ class TextDisplay:
 
 class PlayerInfoText:
     def __init__(self, coords) -> None:
-        # {"text":TextDisplay, "duration":int, "coords": tuple}
         self.stack = []
         self.default_coords = coords
 

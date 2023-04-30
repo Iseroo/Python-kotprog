@@ -66,7 +66,7 @@ class Inventory:
             self.slots[slot].use()
             if self.slots[slot].count <= 0:
                 self.slots[slot] = None
-           
+
             return True
         return False
 
@@ -105,7 +105,6 @@ class InventoryHUD:
             self.selected_slot_img, (self.inventory_offset+((self.selected_slot_img.get_width() - 2) * (self.selected_slot)), self.inventory_offset))
         for item in self.inventory.slots:
             if self.inventory.slots[item] is not None:
-                # print(self.inventory.slots[item].item_image)
                 self.inventory_Surface.blit(self.inventory.slots[item].item_image, (
                     self.inventory_offset+((self.selected_slot_img.get_width() - 2) * (item)) + 4, self.inventory_offset + 4))
 
@@ -186,7 +185,6 @@ class CraftingHUD:
         self.craft(screen)
 
     def update(self):
-        # draw slots in 3x3 grid with 0px spacing
 
         for slot in self.slots:
             self.hud_surface.blit(
@@ -211,7 +209,6 @@ class CraftingHUD:
                 (self.craftable_items_img[item].get_width() - 2 + self.inventory_offsetx) * ([*self.craftable_items.keys()].index(item))), self.inventory_offset + 4))
 
     def mouse_on_item(self, mouse_pos, screen):
-        # set mouse_pos (0,0) as the craftable_items_hud position (0,0)
         mouse_pos = (mouse_pos[0] - (screen.get_width() // 2 - self.box.Surface.get_width() // 2 + (self.box.size[0] // 2 - self.craftable_items_hud.get_width() // 2)),
                      mouse_pos[1] - (screen.get_height()//2 - self.box.Surface.get_height()//2 + (self.box.size[1] // 2 - self.craftable_items_hud.get_height() // 2 - 100)))
         for item in self.craftable_items:
@@ -251,7 +248,7 @@ class CraftingHUD:
                      mouse_pos[1] - (screen.get_height()//2 - self.hud_surface.get_height()//2))
 
         if mouse_pos[0] >= self.slot_img.get_width() * 5 and mouse_pos[0] <= self.slot_img.get_width() * 5 + self.slot_img.get_width() and mouse_pos[1] >= self.slot_img.get_height() and mouse_pos[1] <= self.slot_img.get_height() + self.slot_img.get_height():
-            # mouse pointer
+
             Config.cursor_style = pygame.SYSTEM_CURSOR_HAND
             if pygame.mouse.get_pressed()[0]:
                 if self.to_craft != None:
@@ -267,7 +264,6 @@ class CraftingHUD:
                             return
 
                     for ingredient in self.ingredients[self.to_craft]:
-                        # for item_index in self.inventory.slots:
                         self.inventory.subtract_item(
                             ingredient[0], ingredient[1])
                     item_type = Config.data['item_types'][self.to_craft]
@@ -290,9 +286,6 @@ class CraftingHUD:
                         case 'Material':
                             self.inventory.add_item_to_stack(Material(
                                 self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft]))
-                    # if self.inventory.slots[item_index] and self.inventory.slots[item_index].type == ingredient[0]:
-                    #     self.inventory.slots[item_index].count -= ingredient[1]
-
                     self.empty_slots()
                     self.player.inventory_hud.update_slots()
                     self.to_craft = None
