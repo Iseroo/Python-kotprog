@@ -62,11 +62,11 @@ class Game:
         self.character = Character()
         Config.all_characters.append(self.character)
 
-        self.enemies = [Enemy() for _ in range(0)]
+        self.enemies = [Enemy() for _ in range(100)]
         Config.all_characters.extend(self.enemies)
         for x in self.enemies:
             x.position = self.game_map.get_block_by_indexes(
-                (random.randint(0, 20), random.randint(0, 20))).coords
+                (random.randint(0, 80), random.randint(0, 80))).coords
 
         self.health_bar = HealthBar(
             (self.screen.get_width() // 2, self.screen.get_height()-80))
