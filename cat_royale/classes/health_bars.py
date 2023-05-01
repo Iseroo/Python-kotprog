@@ -1,5 +1,5 @@
 import pygame
-from utils.text_display import TextDisplay
+from cat_royale.classes.text_display import TextDisplay
 
 
 class HealthBar:

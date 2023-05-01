@@ -1,21 +1,21 @@
+import json
 import random
-from typing import Sequence
 import pygame
-from pygame.locals import *
+from pygame.locals import K_q, QUIT, KEYDOWN, K_ESCAPE, K_SPACE, K_e, K_c, K_f, K_m, K_LEFT, K_RIGHT, K_UP, K_DOWN, K_a, K_d, K_s, K_w
 import sys
-from utils.functions import scale_image
-from utils.game_map import Block, GameMap
-from utils.health_bars import HealthBar
-from utils.inventory import InventoryHUD, Inventory, CraftingHUD
-from utils.map_reader import *
-from utils.message_service import *
-from utils.item import *
-from utils.config import Config
+import os
 import webcolors
-from utils.character import Character, Enemy
-from utils.text_display import PlayerInfoText, TextDisplay
-from utils.box import Box
-from utils.event_stack import *
+from cat_royale.classes.functions import scale_image
+from cat_royale.classes.game_map import Block, GameMap
+from cat_royale.classes.health_bars import HealthBar
+from cat_royale.classes.map_reader import read_map_image, get_map_sprite_image
+from cat_royale.classes.message_service import MessageService
+from cat_royale.classes.item import Food, Material, ITEM, MAPCOLOR
+from cat_royale.classes.config import Config
+from cat_royale.classes.character import Character, Enemy
+from cat_royale.classes.text_display import PlayerInfoText, TextDisplay
+from cat_royale.classes.box import Box
+from cat_royale.classes.event_stack import EventStack, Event, WindowStack
 
 pygame.init()
 
@@ -146,7 +146,7 @@ class Game:
                         self.character.onblock.add_item(dropped_item)
                         self.character.onblock.draw(self.map_layer)
                 if event.key == K_f:
-                    self.character.pickup(self.map_layer)
+                    self.character.pickup()
 
                 if event.key == K_c:
                     self.character.use_slot()
@@ -155,8 +155,6 @@ class Game:
                     self.minimap.opened = not self.minimap.opened
                 if event.key == K_e:
                     self.character.crafting_hud.toggle()
-                if event.key == K_h:
-                    [print(x.type) for x in EventStack.stack]
                 if event.key == K_SPACE:
                     self.character.do_attack = True
                     self.character.use_weapon_to_attack()
@@ -174,7 +172,6 @@ class Game:
     def minimap_player(self):
         if self.character.onblock:
 
-            self.character.onblock.indexes
             copy = self.minimap_img.copy()
             pygame.draw.rect(copy, (0, 0, 255),
                              (*self.character.onblock.indexes, 2, 2))
@@ -189,7 +186,7 @@ class Game:
     def enemy_ai_updates(self):
 
         for enemy in self.enemies:
-            enemy.ai(self.map_layer)
+            enemy.ai()
 
     def update(self):
         self.character.set_onblock(self.onblock_for_character(self.character))
@@ -209,7 +206,7 @@ class Game:
         pygame.display.flip()
 
     def onblock_for_character(self, character):
-        return self.game_map.on_block_check(character.get_position(), self.map_layer, camera_pos=self.camera_pos)
+        return self.game_map.on_block_check(character.get_position())
 
     def draw(self):
         self.determine_end()
@@ -252,7 +249,7 @@ class Game:
             try:
 
                 duration = message["duration"]
-            except:
+            except KeyError:
                 duration = 100
             self.player_info_text_display.add(
                 text, duration)
@@ -292,7 +289,7 @@ class Game:
                         block.add_item(item)
 
     def move_camera(self, keys=None, speed=1):
-        keys = pygame.key.get_pressed() if keys == None else keys
+        keys = pygame.key.get_pressed() if not keys else keys
 
         if keys[K_LEFT]:
             self.camera_pos = (
@@ -342,7 +339,10 @@ class Game:
         keys = {K_LEFT: False, K_RIGHT: False, K_UP: False, K_DOWN: False}
 
         character_pos = (
-            self.character.position[0] + self.camera_pos[0] + Config.data["camera_offset"]["x"], self.character.position[1] + self.camera_pos[1] + Config.data["camera_offset"]["y"])
+            self.character.position[0] + self.camera_pos[0] +
+            Config.data["camera_offset"]["x"],
+            self.character.position[1] + self.camera_pos[1] +
+            Config.data["camera_offset"]["y"])
 
         if character_pos[0] < 0 + Config.data["camera_offset"]["x"]:
 
@@ -369,10 +369,21 @@ class Game:
                 sprite_sheet, ITEM[item.name].value)
 
 
-if __name__ == "__main__":
-    Config.load("./config/config.json")
-    Config.load_image_locations("./assets/image_locations.json")
-    Config.cursor_style
+def load_image_locations(path: str):
+    with open(path, 'r', encoding="UTF-8") as f:
+        return json.load(f)
+
+
+def main_func():
+    config_file = os.path.join(os.path.dirname(
+        __file__), "config", "config.json")
+    Config.load(config_file)
+    img_file = os.path.join(os.path.dirname(__file__),
+                            "assets", "image_locations.json")
+    images_dict = load_image_locations(img_file)
+    for key, item in images_dict.items():
+        Config.images[key] = os.path.join(
+            os.path.dirname(__file__), "assets/images", item)
 
     game = Game()
 

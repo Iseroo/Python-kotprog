@@ -1,0 +1,12 @@
+{
+    "cat": "cat.png",
+    "enemy_cat": "enemy_cat.png",
+    "grass": "grass.png",
+    "inventory_bar": "Inventory_Bar.png",
+    "inventory_slot": "Inventory_Slot.png",
+    "inventory_slot_selected": "Inventory_select.png",
+    "items": "items.png",
+    "level00": "level00.png",
+    "loading_screen": "loading_screen.png",
+    "arrow": "arrow.png"
+}

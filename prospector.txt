@@ -1,0 +1,53 @@
+Messages
+========
+
+classes\event_stack.py
+  Line: 70
+    pylint: not-an-iterable / Non-iterable value EventStack.stack[::-1] is used in an iterating context (col 24)
+  Line: 87
+    pylint: not-callable / event is not callable (col 8)
+  Line: 92
+    pylint: not-an-iterable / Non-iterable value EventStack.stack[::-1] is used in an iterating context (col 24)
+
+classes\inventory.py
+  Line: 270
+    pylint: too-many-nested-blocks / Too many nested blocks (6/5) (col 8)
+
+classes\item.py
+  Line: 81
+    pylint: too-many-arguments / Too many arguments (6/5) (col 4)
+  Line: 86
+    pylint: arguments-differ / Number of parameters was 2 in 'Item.use' and is now 2 in overriding 'Food.use' method (col 4)
+    pylint: arguments-differ / Variadics removed in overriding 'Food.use' method (col 4)
+  Line: 98
+    pylint: too-many-arguments / Too many arguments (6/5) (col 4)
+  Line: 104
+    pylint: arguments-differ / Number of parameters was 2 in 'Item.use' and is now 2 in overriding 'Weapon.use' method (col 4)
+    pylint: arguments-differ / Variadics removed in overriding 'Weapon.use' method (col 4)
+  Line: 134
+    pylint: arguments-differ / Variadics removed in overriding 'Tool.use' method (col 4)
+
+main.py
+  Line: 243
+    pylint: unsubscriptable-object / Value 'message' is unsubscriptable (col 38)
+  Line: 244
+    pylint: unsubscriptable-object / Value 'message' is unsubscriptable (col 30)
+  Line: 246
+    pylint: unsubscriptable-object / Value 'message' is unsubscriptable (col 16)
+  Line: 249
+    pylint: unsubscriptable-object / Value 'message' is unsubscriptable (col 27)
+
+
+
+Check Information
+=================
+         Started: 2023-05-01 12:36:12.605593
+        Finished: 2023-05-01 12:36:21.061653
+      Time Taken: 8.46 seconds
+       Formatter: grouped
+        Profiles: default, no_doc_warnings, no_test_warnings, strictness_medium, strictness_high, strictness_veryhigh, no_member_warnings
+      Strictness: None
+  Libraries Used: 
+       Tools Run: dodgy, mccabe, profile-validator, pycodestyle, pyflakes, pylint
+  Messages Found: 15
+

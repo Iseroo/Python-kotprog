@@ -1,5 +1,5 @@
 
-import PIL.Image as Image
+from PIL import Image
 import pygame
 
 

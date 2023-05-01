@@ -1,11 +1,23 @@
-
 import pygame
-from utils.config import Config
-from utils.event_stack import *
+from cat_royale.classes.config import Config
+from cat_royale.classes.event_stack import EventStack, Event, WindowStack
 
 
 class Box:
+    """
+
+    Attributes:
+        size (tuple): A tuple containing the width and height of the box.
+        close_button (bool): Indicates if the box should have a close button. Default is True.
+        close_callback (callable): The callback function to be executed when the box is closed.
+        parent (Box): The parent class, if this box is a child. Default is None.
+        Surface (pygame.Surface): The surface on which the box is drawn.
+        position (tuple): The position of the box on the screen.
+        opened (bool): Indicates if the box is currently open.
+    """
+
     def __init__(self, size, close_button=True, close_callback=None, parent=None) -> None:
+        """Initializes a new Box instance with the specified size and options."""
         self.size = size
         self._close_callback = None
         self.close_button = close_button
@@ -39,27 +51,33 @@ class Box:
         else:
             self.close()
 
-    def reset_Surface(self):
+    def reset_surface(self):
+        """Resets the surface of the box and fills it with its default color and border."""
         self.Surface = pygame.Surface(self.size, pygame.SRCALPHA)
         self.Surface.fill((254, 211, 127))
         self.add_border()
 
     @property
     def close_callback(self):
+        """The callback function to be executed when the box is closed."""
         return self._close_callback
 
     @close_callback.setter
     def close_callback(self, value):
+        """Sets the callback function to be executed when the box is closed."""
         self._close_callback = value
 
     def add_element(self, element, pos):
+        """Adds a graphical element to the box at the specified position."""
         self.Surface.blit(element, pos)
 
     def reset_and_add(self, element, pos):
-        self.reset_Surface()
+        """Resets the surface of the box and adds a graphical element at the specified position."""
+        self.reset_surface()
         self.Surface.blit(element, pos)
 
     def add_border(self):
+        """Adds a border to the box."""
         pygame.draw.rect(self.Surface, (51, 32, 24),
                          (0, 0, self.size[0], self.size[1]), 2, 2, 2, 2)
         pygame.draw.rect(self.Surface, (76, 48, 36),
@@ -80,9 +98,11 @@ class Box:
                              (self.size[0], 0), (self.size[0]-20, 20), 2)
 
     def set_close_event(self, event):
+        """Sets the close event callback function."""
         self.close_callback = event
 
     def close(self):
+        """Closes the box and executes the close callback function if present."""
         self._opened = False
         if self._close_callback:
             self._close_callback()
@@ -93,14 +113,17 @@ class Box:
         EventStack.remove(self.event_close)
 
     def mouse_on_close(self):
+        """Handles mouse events when the mouse hovers over the close button."""
         mouse_pos = pygame.mouse.get_pos()
-        if mouse_pos[0] > self.position[0] + self.size[0]-20 and mouse_pos[0] < self.position[0] + self.size[0] and mouse_pos[1] > self.position[1] and mouse_pos[1] < self.position[1] + 20:
+        if (mouse_pos[0] > self.position[0] + self.size[0]-20 and mouse_pos[0] < self.position[0] + self.size[0]
+                and mouse_pos[1] > self.position[1] and mouse_pos[1] < self.position[1] + 20):
             Config.cursor_style = pygame.SYSTEM_CURSOR_HAND
             if pygame.mouse.get_pressed()[0]:
 
                 self.close()
 
     def __call__(self, position=None):
+        """Returns the surface of the box and updates its position if specified."""
         if self.close_button:
             if not EventStack.find_event(self.event_mouse_on):
                 EventStack.push(self.event_mouse_on)

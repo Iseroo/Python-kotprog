@@ -1,8 +1,9 @@
 from enum import Enum
 
 import pygame
-from utils.map_reader import get_map_sprite_image
-from utils.message_service import MessageService
+from cat_royale.classes.config import Config
+from cat_royale.classes.map_reader import get_map_sprite_image
+from cat_royale.classes.message_service import MessageService
 
 
 class MAPCOLOR(Enum):
@@ -58,7 +59,8 @@ def load_item_image(item_type: ITEM) -> pygame.Surface:
     Returns:
         pygame.Surface: image of the item
     """
-    sprite_sheet = pygame.image.load('assets/images/items.png').convert_alpha()
+    sprite_sheet = pygame.image.load(
+        Config.images["items"]).convert_alpha()
 
     return get_map_sprite_image(sprite_sheet, ITEM[item_type].value)
 

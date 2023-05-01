@@ -1,17 +1,11 @@
-
-
-import random
 import pygame
-from utils.item import Weapon, Tool, Food, Material
-from utils.event_stack import Event, EventStack, WindowStack
-from utils.box import Box
-from utils.config import Config
-from utils.functions import scale_image
-from utils.message_service import MessageService
-from typing import *
-from utils.item import load_item_image, Item
+from cat_royale.classes.item import Weapon, Tool, Food, Material
+from cat_royale.classes.box import Box
+from cat_royale.classes.config import Config
+from cat_royale.classes.functions import scale_image
 
-from utils.text_display import TextDisplay
+from cat_royale.classes.item import load_item_image
+from cat_royale.classes.text_display import TextDisplay
 
 
 class Inventory:
@@ -26,23 +20,23 @@ class Inventory:
         for slot in self.slots:
             if self.slots[slot] is not None and self.slots[slot].type == item.type and self.slots[slot].count < self.slots[slot].max:
                 self.slots[slot].count += item.count
-                self.isFull = self.checkFull()
+                self.isFull = self.check_full()
                 return True
 
         for slot in self.slots:
             if self.slots[slot] is None:
                 self.slots[slot] = item
-                self.isFull = self.checkFull()
+                self.isFull = self.check_full()
                 return True
 
         return False
 
-    def checkFull(self):
+    def check_full(self):
         for slot in self.slots:
-            if self.slots[slot] is None:
+            if not self.slots[slot]:
                 return False
 
-            elif self.slots[slot].count < self.slots[slot].max:
+            if self.slots[slot].count < self.slots[slot].max:
                 return False
 
         return True
@@ -199,25 +193,51 @@ class CraftingHUD:
 
         self.box.reset_and_add(self.hud_surface, (self.box.size[0] // 2 - self.hud_surface.get_width() // 2,
                                                   self.box.size[1] // 2 - self.hud_surface.get_height() // 2))
+
         self.box.add_element(self.craftable_items_hud, (self.box.size[0] // 2 - self.craftable_items_hud.get_width() // 2,
                                                         self.box.size[1] // 2 - self.craftable_items_hud.get_height() // 2 - 100))
 
     def update_craftable_items(self):
         self.craftable_items_hud = self.inv_bar.copy()
         for item in self.craftable_items:
+
             self.craftable_items_hud.blit(self.craftable_items_img[item], (self.inventory_offset + 4 + (
-                (self.craftable_items_img[item].get_width() - 2 + self.inventory_offsetx) * ([*self.craftable_items.keys()].index(item))), self.inventory_offset + 4))
+                (self.craftable_items_img[item].get_width(
+                ) - 2 + self.inventory_offsetx)
+                * ([*self.craftable_items.keys()].index(item))), self.inventory_offset + 4))
 
     def mouse_on_item(self, mouse_pos, screen):
-        mouse_pos = (mouse_pos[0] - (screen.get_width() // 2 - self.box.Surface.get_width() // 2 + (self.box.size[0] // 2 - self.craftable_items_hud.get_width() // 2)),
-                     mouse_pos[1] - (screen.get_height()//2 - self.box.Surface.get_height()//2 + (self.box.size[1] // 2 - self.craftable_items_hud.get_height() // 2 - 100)))
+        mouse_pos = (mouse_pos[0] - (screen.get_width() // 2 - self.box.Surface.get_width() // 2
+                                     + (self.box.size[0] // 2 - self.craftable_items_hud.get_width() // 2)),
+                     mouse_pos[1] - (screen.get_height()//2 - self.box.Surface.get_height()//2
+                                     + (self.box.size[1] // 2 - self.craftable_items_hud.get_height() // 2 - 100)))
+
         for item in self.craftable_items:
             self.update_craftable_items()
             item_coords = (self.inventory_offset + 4 + (
-                (self.craftable_items_img[item].get_width() - 2 + self.inventory_offsetx) * ([*self.craftable_items.keys()].index(item))), self.inventory_offset + 4)
-            if mouse_pos[0] >= item_coords[0] and mouse_pos[0] <= item_coords[0] + self.craftable_items_img[item].get_width() and mouse_pos[1] >= item_coords[1] and mouse_pos[1] <= item_coords[1] + self.craftable_items_img[item].get_height():
-                self.craftable_items_hud.blit(self.selected_slot_img, (self.inventory_offset + (
-                    (self.craftable_items_img[item].get_width() - 2 + self.inventory_offsetx) * ([*self.craftable_items.keys()].index(item))), self.inventory_offset))
+                (self.craftable_items_img[item].get_width(
+                ) - 2 + self.inventory_offsetx)
+                * ([*self.craftable_items.keys()].index(item))), self.inventory_offset + 4)
+
+            if (mouse_pos[0] >= item_coords[0]
+                and mouse_pos[0] <= item_coords[0] + self.craftable_items_img[item].get_width()
+                and mouse_pos[1] >= item_coords[1]
+                    and mouse_pos[1] <= item_coords[1] + self.craftable_items_img[item].get_height()):
+
+                self.craftable_items_hud.blit(
+                    self.selected_slot_img,
+                    (self.inventory_offset + (
+                        (self.craftable_items_img[item].get_width()
+                         - 2 + self.inventory_offsetx
+                         )
+                        * (
+                            [*self.craftable_items.keys()].index(item)
+                        )
+                    ),
+                        self.inventory_offset
+                    )
+                )
+
                 Config.set_cursor_style(pygame.SYSTEM_CURSOR_HAND)
 
                 self.update()
@@ -247,51 +267,65 @@ class CraftingHUD:
         mouse_pos = (mouse_pos[0] - (screen.get_width() // 2 - self.hud_surface.get_width() // 2),
                      mouse_pos[1] - (screen.get_height()//2 - self.hud_surface.get_height()//2))
 
-        if mouse_pos[0] >= self.slot_img.get_width() * 5 and mouse_pos[0] <= self.slot_img.get_width() * 5 + self.slot_img.get_width() and mouse_pos[1] >= self.slot_img.get_height() and mouse_pos[1] <= self.slot_img.get_height() + self.slot_img.get_height():
+        if (mouse_pos[0] >= self.slot_img.get_width() * 5
+            and mouse_pos[0] <= self.slot_img.get_width() * 5 + self.slot_img.get_width()
+            and mouse_pos[1] >= self.slot_img.get_height()
+                and mouse_pos[1] <= self.slot_img.get_height() + self.slot_img.get_height()):
 
             Config.cursor_style = pygame.SYSTEM_CURSOR_HAND
-            if pygame.mouse.get_pressed()[0]:
-                if self.to_craft != None:
-                    for ingredient in self.ingredients[self.to_craft]:
-                        found = False
-                        for item_index in self.inventory.slots:
+            if pygame.mouse.get_pressed()[0] and self.to_craft:
 
-                            if self.inventory.slots[item_index] and self.inventory.slots[item_index].type == ingredient[0]:
-                                found = True
-                                if self.inventory.slots[item_index].count < ingredient[1]:
-                                    return
-                        if not found:
-                            return
+                for ingredient in self.ingredients[self.to_craft]:
+                    found = False
+                    for item_index in self.inventory.slots:
 
-                    for ingredient in self.ingredients[self.to_craft]:
-                        self.inventory.subtract_item(
-                            ingredient[0], ingredient[1])
-                    item_type = Config.data['item_types'][self.to_craft]
+                        if self.inventory.slots[item_index] and self.inventory.slots[item_index].type == ingredient[0]:
+                            found = True
+                            if self.inventory.slots[item_index].count < ingredient[1]:
+                                return
+                    if not found:
+                        return
 
-                    match item_type:
-                        case 'Weapon':
-                            try:
-                                damage = Config.data["damage"][self.to_craft]
-                            except KeyError:
-                                damage = 3
-                            self.inventory.add_item_to_stack(Weapon(
-                                self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft], damage=damage, durability=Config.data["durabilities"][self.to_craft]))
+                for ingredient in self.ingredients[self.to_craft]:
+                    self.inventory.subtract_item(
+                        ingredient[0], ingredient[1])
+                item_type = Config.data['item_types'][self.to_craft]
 
-                        case 'Tool':
-                            self.inventory.add_item_to_stack(Tool(
-                                self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft], Config.data["durabilities"][self.to_craft]))
-                        case 'Food':
-                            self.inventory.add_item_to_stack(Food(
-                                self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft], Config.data["food_health_bonus"][self.to_craft][0], Config.data["food_health_bonus"][self.to_craft][1]))
-                        case 'Material':
-                            self.inventory.add_item_to_stack(Material(
-                                self.craftable_items_img[self.to_craft], self.to_craft, Config.data['items_stack_size'][self.to_craft]))
-                    self.empty_slots()
-                    self.player.inventory_hud.update_slots()
-                    self.to_craft = None
-                    self.update()
-                    self.update_craftable_items()
-                    return
+                match item_type:
+                    case 'Weapon':
+                        try:
+                            damage = Config.data["damage"][self.to_craft]
+                        except KeyError:
+                            damage = 3
+                        self.inventory.add_item_to_stack(Weapon(
+                            self.craftable_items_img[self.to_craft],
+                            self.to_craft,
+                            Config.data['items_stack_size'][self.to_craft],
+                            damage=damage,
+                            durability=Config.data["durabilities"][self.to_craft]))
+
+                    case 'Tool':
+                        self.inventory.add_item_to_stack(Tool(
+                            self.craftable_items_img[self.to_craft],
+                            self.to_craft, Config.data['items_stack_size'][self.to_craft],
+                            Config.data["durabilities"][self.to_craft]))
+                    case 'Food':
+                        self.inventory.add_item_to_stack(Food(
+                            self.craftable_items_img[self.to_craft], self.to_craft,
+                            Config.data['items_stack_size'][self.to_craft],
+                            Config.data["food_health_bonus"][self.to_craft][0],
+                            Config.data["food_health_bonus"][self.to_craft][1]))
+                    case 'Material':
+                        self.inventory.add_item_to_stack(Material(
+                            self.craftable_items_img[self.to_craft],
+                            self.to_craft,
+                            Config.data['items_stack_size'][self.to_craft]))
+                self.empty_slots()
+                self.player.inventory_hud.update_slots()
+                self.to_craft = None
+                self.update()
+                self.update_craftable_items()
+                return
 
     @property
     def Surface(self):

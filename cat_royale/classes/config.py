@@ -2,8 +2,8 @@ import json
 
 
 class Config:
-    data = None
-    images = None
+    data = {}
+    images = {}
 
     screen = None
     map_layer = None
@@ -15,24 +15,29 @@ class Config:
         "WOOD": [],
         "STICK": [],
         "STONE": [],
+        "WOOD_SWORD": [],
+        "STONE_SWROD": [],
+        "PICKAXE": [],
+        "AXE": [],
+        "TORCH": [],
+
 
     }
 
     cursor_style = None
 
+    @staticmethod
     def set_cursor_style(style):
         if not style:
             Config.cursor_style = style
             return
 
+    @staticmethod
     def load(path: str):
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding="UTF-8") as f:
             Config.data = json.load(f)
 
-    def load_image_locations(path: str):
-        with open(path, 'r') as f:
-            Config.images = json.load(f)
+    @staticmethod
+    def remove_from_items(item_type, item):
 
-    def remove_from_items(type, item):
-
-        Config.items[type].pop(Config.items[type].index(item))
+        Config.items[item_type].pop(Config.items[item_type].index(item))
