@@ -26,9 +26,8 @@ class HealthBar:
 
     @hp.setter
     def hp(self, hp):
-        if hp >= 0 or hp <= 100:
-            self._hp = hp
-            self.make_bar_surfaces()
+        self._hp = max(min(hp, 100), 0)
+        self.make_bar_surfaces()
 
     @property
     def hunger(self):
@@ -36,9 +35,8 @@ class HealthBar:
 
     @hunger.setter
     def hunger(self, hunger):
-        if hunger >= 0 or hunger <= 100:
-            self._hunger = hunger
-            self.make_bar_surfaces()
+        self._hunger = max(min(hunger, 100), 0)
+        self.make_bar_surfaces()
 
     def update(self, hp, hunger):
         self.hp = hp

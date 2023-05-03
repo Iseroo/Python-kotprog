@@ -111,6 +111,7 @@ class Box:
             self.parent.opened = False
         EventStack.remove(self.event_mouse_on)
         EventStack.remove(self.event_close)
+        WindowStack.remove_window(self)
 
     def mouse_on_close(self):
         """Handles mouse events when the mouse hovers over the close button."""

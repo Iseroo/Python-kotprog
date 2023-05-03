@@ -374,7 +374,7 @@ def load_image_locations(path: str):
         return json.load(f)
 
 
-def main_func():
+def load_config():
     config_file = os.path.join(os.path.dirname(
         __file__), "config", "config.json")
     Config.load(config_file)
@@ -384,6 +384,10 @@ def main_func():
     for key, item in images_dict.items():
         Config.images[key] = os.path.join(
             os.path.dirname(__file__), "assets/images", item)
+
+
+def main_func():
+    load_config()
 
     game = Game()
 
