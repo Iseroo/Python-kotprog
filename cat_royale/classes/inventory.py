@@ -9,6 +9,8 @@ from cat_royale.classes.text_display import TextDisplay
 
 
 class Inventory:
+    """Inventory class that holds all the items the player has in their inventory"""
+
     def __init__(self) -> None:
         self.slots = {x: None for x in range(10)}
         self.isFull = False
@@ -17,6 +19,7 @@ class Inventory:
         return str(self.slots)
 
     def add_item_to_stack(self, item):
+        """ Adds an item to the inventory if there is a stack of the same item type while it stack size lower than the maximum, otherwise adds it to the first empty slot"""
         for slot in self.slots:
             if self.slots[slot] is not None and self.slots[slot].type == item.type and self.slots[slot].count < self.slots[slot].max:
                 self.slots[slot].count += item.count
@@ -32,6 +35,7 @@ class Inventory:
         return False
 
     def check_full(self):
+        """ Checks if the inventory is full"""
         for slot in self.slots:
             if not self.slots[slot]:
                 return False
@@ -42,6 +46,7 @@ class Inventory:
         return True
 
     def subtract_item(self, item, count):
+        """ Removes a certain amount of items from the inventory"""
         for slot in self.slots:
             if self.slots[slot] is not None and self.slots[slot].type == item:
                 self.slots[slot].count -= count
@@ -51,11 +56,13 @@ class Inventory:
         return False
 
     def remove_item_from_slot(self, slot: int):
+        """ Removes an item from a certain slot"""
         removed_item = self.slots[slot]
         self.slots[slot] = None
         return removed_item
 
     def use_item(self, slot: int):
+        """ Uses an item from a certain slot"""
         if self.slots[slot] is not None:
             self.slots[slot].use()
             if self.slots[slot].count <= 0:
@@ -66,6 +73,8 @@ class Inventory:
 
 
 class InventoryHUD:
+    """Inventory HUD class that displays the inventory on the screen"""
+
     def __init__(self, inventory: Inventory) -> None:
         self.inventory_offset = 12
         self.inv_bar = scale_image(
@@ -110,6 +119,8 @@ class InventoryHUD:
 
 
 class CraftingHUD:
+    """Crafting HUD class that displays the crafting menu on the screen"""
+
     def __init__(self, player) -> None:
         self.inventory_offset = 12
         self.inventory_offsetx = 8
@@ -153,13 +164,16 @@ class CraftingHUD:
         self.update_craftable_items()
 
     def add_event_to_box(self, event):
+        """Adds the event to the box for close event"""
         self.box.set_close_event(event)
 
     def empty_slots(self):
+        """Empties the slots"""
         self.slots = {x: self.slot_img.copy() for x in range(9)}
         self.result = self.slot_img.copy()
 
     def toggle(self):
+        """Toggles the crafting menu"""
         self.box.opened = not self.box.opened
         self.update_craftable_items()
         self.update()
@@ -179,7 +193,7 @@ class CraftingHUD:
         self.craft(screen)
 
     def update(self):
-
+        """Updates the crafting menu surfaces"""
         for slot in self.slots:
             self.hud_surface.blit(
                 self.slots[slot], (slot % 3 * self.slot_img.get_width(), slot // 3 * self.slot_img.get_height()))
@@ -198,6 +212,7 @@ class CraftingHUD:
                                                         self.box.size[1] // 2 - self.craftable_items_hud.get_height() // 2 - 100))
 
     def update_craftable_items(self):
+        """Updates the craftable items"""
         self.craftable_items_hud = self.inv_bar.copy()
         for item in self.craftable_items:
 
@@ -207,6 +222,7 @@ class CraftingHUD:
                 * ([*self.craftable_items.keys()].index(item))), self.inventory_offset + 4))
 
     def mouse_on_item(self, mouse_pos, screen):
+        """Checks if the mouse is on an item"""
         mouse_pos = (mouse_pos[0] - (screen.get_width() // 2 - self.box.Surface.get_width() // 2
                                      + (self.box.size[0] // 2 - self.craftable_items_hud.get_width() // 2)),
                      mouse_pos[1] - (screen.get_height()//2 - self.box.Surface.get_height()//2
@@ -250,7 +266,7 @@ class CraftingHUD:
         self.update_craftable_items()
 
     def set_crafint_table(self, item):
-
+        """Sets the crafting table"""
         for index, ingredient in enumerate(self.ingredients[item]):
             self.slots[index].blit(load_item_image(ingredient[0]), (4, 4))
             text = TextDisplay(
@@ -263,6 +279,7 @@ class CraftingHUD:
         self.update()
 
     def craft(self, screen):
+        """Crafts the item if possible and if the mouse is on the craft button"""
         mouse_pos = pygame.mouse.get_pos()
         mouse_pos = (mouse_pos[0] - (screen.get_width() // 2 - self.hud_surface.get_width() // 2),
                      mouse_pos[1] - (screen.get_height()//2 - self.hud_surface.get_height()//2))
@@ -329,6 +346,7 @@ class CraftingHUD:
 
     @property
     def Surface(self):
+        """Returns the surface of the crafting table"""
         self.update_craftable_items()
         self.mouse_on_item(pygame.mouse.get_pos(), Config.screen)
         self.craft(Config.screen)

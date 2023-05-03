@@ -80,12 +80,15 @@ class Item:
 
 
 class Food(Item):
+    """ Food item class, child of Item class"""
+
     def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1, hunger: int = 0, health: int = 0) -> None:
         super().__init__(item_image.copy(), item_type, stack_size)
         self.hunger = hunger
         self.health = health
 
     def use(self, character):
+        """ Use function for food items, adds health and hunger to the character and removes the item from the inventory"""
         if self.count > 0:
             if character.player:
                 MessageService.add(
@@ -97,6 +100,8 @@ class Food(Item):
 
 
 class Weapon(Item):
+    """ Weapon item class, child of Item class"""
+
     def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1, damage: int = 0, durability: int = 0) -> None:
         super().__init__(item_image.copy(), item_type, stack_size)
         self.damage = damage
@@ -104,13 +109,14 @@ class Weapon(Item):
         self.max_durability = durability
 
     def use(self, character):
+        """ Use function for weapon items, deals damage to the character and lowers the durability of the item"""
         self.durability -= 1
         character.do_damage(self.damage)
         self.item_image.blit(self.make_durability_bar(),
                              (0, self.item_image.get_height() - 2))
 
     def make_durability_bar(self):
-
+        """ Creates a durability bar for the weapon item"""
         durability_bar = pygame.Surface((self.item_image.get_width(), 2))
         durability_bar.fill((90, 0, 0))
         durability_bar.fill(
@@ -119,11 +125,15 @@ class Weapon(Item):
 
 
 class Material(Item):
+    """ Material item class, child of Item class"""
+
     def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1) -> None:
         super().__init__(item_image.copy(), item_type, stack_size)
 
 
 class Tool(Item):
+    """ Tool item class, child of Item class"""
+
     count = 0
 
     def __init__(self, item_image, item_type: ITEM = None, stack_size: int = 1, durability: int = 0) -> None:
@@ -134,12 +144,13 @@ class Tool(Item):
         self.id = Tool.count
 
     def use(self):
+        """ Use function for tool items, and lowers the durability of the item"""
         self.durability -= 1
         self.item_image.blit(self.make_durability_bar(),
                              (0, self.item_image.get_height() - 2))
 
     def make_durability_bar(self):
-
+        """ Creates a durability bar for the tool item"""
         durability_bar = pygame.Surface((self.item_image.get_width(), 2))
         durability_bar.fill((90, 0, 0))
         durability_bar.fill(

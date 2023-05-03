@@ -170,6 +170,7 @@ class Game:
         self.message_service_subscribe()
 
     def minimap_player(self):
+        """ Draws player and enemies on minimap """
         if self.character.onblock:
 
             copy = self.minimap_img.copy()
@@ -184,11 +185,12 @@ class Game:
             self.minimap.Surface.blit(copy, (25, 25))
 
     def enemy_ai_updates(self):
-
+        """Calls 'ai' for all enemies"""
         for enemy in self.enemies:
             enemy.ai()
 
     def update(self):
+        """Updates the objects on the screen"""
         self.character.set_onblock(self.onblock_for_character(self.character))
         for enemy in self.enemies:
             enemy.set_onblock(self.onblock_for_character(enemy))
@@ -206,9 +208,11 @@ class Game:
         pygame.display.flip()
 
     def onblock_for_character(self, character):
+        """Returns the block the character is on"""
         return self.game_map.on_block_check(character.get_position())
 
     def draw(self):
+        """Draws the objects on the screen"""
         self.determine_end()
         if self.game_over:
             self.screen.blit(self.game_over_dialog.Surface, (0, 0))
@@ -240,6 +244,7 @@ class Game:
         self.screen.blit(remaining_player_text.Surface, (0, 0))
 
     def message_service_subscribe(self):
+        """Subscribes to the message service"""
         message = MessageService.next()
         if message:
             color = (249, 113, 50) if message["severity"] == "warning" else (
@@ -255,6 +260,7 @@ class Game:
                 text, duration)
 
     def make_map(self):
+        """Makes the map from the png file"""
         self.game_map = GameMap()
         Config.game_map = self.game_map
         sprite_sheet = pygame.image.load(
@@ -289,6 +295,7 @@ class Game:
                         block.add_item(item)
 
     def move_camera(self, keys=None, speed=1):
+        """Moves the camera"""
         keys = pygame.key.get_pressed() if not keys else keys
 
         if keys[K_LEFT]:
@@ -309,7 +316,7 @@ class Game:
             self.check_camera_pos()
 
     def check_camera_pos(self):
-
+        """Checks if the camera is in the map bounds"""
         if self.camera_pos[0] > 0 + Config.data["camera_offset"]["x"]:
             self.camera_pos = (
                 0 + Config.data["camera_offset"]["x"], self.camera_pos[1])
@@ -324,7 +331,7 @@ class Game:
                                Config.data["screen_size"]["height"] - Config.data["camera_offset"]["y"])
 
     def move_character(self):
-
+        """Moves the character"""
         keys = pygame.key.get_pressed()
 
         if keys[K_a]:
@@ -336,6 +343,7 @@ class Game:
         if keys[K_s]:
             self.character.move("down")
 
+        """ Checks if the character is in the map bounds and moves the camera if it is"""
         keys = {K_LEFT: False, K_RIGHT: False, K_UP: False, K_DOWN: False}
 
         character_pos = (
@@ -359,9 +367,11 @@ class Game:
         self.move_camera(keys, speed=100)
 
     def update_camera(self):
+        """Updates the camera"""
         self.game_map.draw(self.map_layer)
 
     def load_items(self):
+        """Loads the items"""
         sprite_sheet = pygame.image.load(
             Config.images["items"]).convert_alpha()
         for item in ITEM:
